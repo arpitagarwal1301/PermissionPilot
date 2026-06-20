@@ -7,6 +7,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **README visuals** — an animated light/dark wizard-flow GIF (shown side by
+  side) and a theme-aware 16-permission board grid. `SnapshotMode` now renders
+  the board in both themes for regenerable assets.
 - **Downloadable demo** — a universal, ad-hoc-signed `.dmg` (built via
   `Example/make-dmg.sh`) attached to the GitHub release, so devs can evaluate the
   flow without building. Not notarized; open via right-click → Open.

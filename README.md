@@ -25,8 +25,10 @@ layer, done once:
 - 🧩 **Composable** — engine only, components only, or the whole flow. No SDK branding: your app's name, icon, and accent.
 
 <p align="center">
-  <img src="docs/flow.png" alt="PermissionPilot onboarding flow — welcome, grant, done" width="100%">
+  <img src="docs/wizard-flow-light.gif" width="49%" alt="PermissionPilot onboarding — light">
+  <img src="docs/wizard-flow-dark.gif" width="49%" alt="PermissionPilot onboarding — dark">
 </p>
+<p align="center"><sub>The first-run wizard — welcome → grant → done — in light and dark.</sub></p>
 
 ## Requirements
 
@@ -124,6 +126,14 @@ keep the bundle ID constant. Recover a stuck state with
 `tccutil reset <Service> <bundle-id>`. On **MDM-managed Macs**, corporate PPPC
 policy can silently suppress prompts for non-notarized apps. PermissionPilot
 surfaces these states clearly but **cannot fix signing** — that's your build setup.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/board-grid-dark.png">
+    <img src="docs/board-grid-light.png" width="600" alt="All 16 macOS permissions in the List ⇄ Grid board">
+  </picture>
+</p>
+<p align="center"><sub>All 16 permissions — List ⇄ Grid, live status. Adapts to your theme.</sub></p>
 
 <details>
 <summary><b>Per-permission reference</b> — detection · prompt · Settings anchor · Info.plist key</summary>
