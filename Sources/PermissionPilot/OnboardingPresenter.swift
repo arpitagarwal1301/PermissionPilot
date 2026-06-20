@@ -39,6 +39,10 @@ public final class OnboardingPresenter: NSObject, NSWindowDelegate {
         // close-time release to avoid a double-free when the wizard closes.
         window.isReleasedWhenClosed = false
         window.title = configuration.appName
+        // Pin the window appearance when the host forces a theme; nil follows system.
+        if let scheme = configuration.colorScheme {
+            window.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua)
+        }
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]

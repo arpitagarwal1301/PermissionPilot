@@ -17,6 +17,18 @@ public struct OnboardingView: View {
         var index: Int { rawValue }
     }
 
+    /// The steps actually shown, in order, honoring the configuration's
+    /// `showsWelcomeStep` / `showsDoneStep`. Permissions is always present.
+    static func activeSteps(for configuration: OnboardingConfiguration) -> [Step] {
+        var steps: [Step] = []
+        if configuration.showsWelcomeStep { steps.append(.welcome) }
+        steps.append(.permissions)
+        if configuration.showsDoneStep { steps.append(.done) }
+        return steps
+    }
+
+    private var steps: [Step] { Self.activeSteps(for: configuration) }
+
     @ObservedObject private var manager: PermissionManager
     private let configuration: OnboardingConfiguration
     private let onFinish: () -> Void
@@ -34,14 +46,18 @@ public struct OnboardingView: View {
         self.manager = manager
         self.configuration = configuration
         self.onFinish = onFinish
-        _step = State(initialValue: initialStep)
+        // Start at the requested step if it's shown; otherwise the first shown
+        // step (e.g. permissions when the welcome step is omitted).
+        let active = Self.activeSteps(for: configuration)
+        _step = State(initialValue: active.contains(initialStep) ? initialStep : (active.first ?? .permissions))
     }
 
     public var body: some View {
         VStack(spacing: 0) {
-            // The approved screens show step dots only on the permissions step.
-            if step == .permissions {
-                StepIndicator(current: step.index, total: Step.allCases.count)
+            // Step dots show only on the permissions step, and only when there's
+            // more than one step to indicate progress through.
+            if step == .permissions, steps.count > 1 {
+                StepIndicator(current: steps.firstIndex(of: .permissions) ?? 0, total: steps.count)
                     .padding(.top, PPDesign.s16)
                     .padding(.bottom, PPDesign.s8)
             }
@@ -57,6 +73,7 @@ public struct OnboardingView: View {
         .background(PPColor.window)
         .permissionPilotTint(configuration.tint)
         .tint(configuration.tint ?? .accentColor)
+        .preferredColorScheme(configuration.colorScheme)
         .onAppear { manager.refresh() }
         .onChange(of: manager.allRequiredGranted) { granted in
             autoAdvanceIfReady(granted)
@@ -189,11 +206,14 @@ public struct OnboardingView: View {
     // so finishing is never blocked on an optional permission.
     private var bottomBar: some View {
         HStack {
-            Button(ppLocalized("onboarding.back")) { go(to: .welcome) }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+            // Back only when there's a welcome step to return to.
+            if configuration.showsWelcomeStep {
+                Button(ppLocalized("onboarding.back")) { go(to: .welcome) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+            }
             Spacer()
-            Button(ppLocalized("onboarding.continue")) { go(to: .done) }
+            Button(ppLocalized("onboarding.continue")) { advanceFromPermissions() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .disabled(!manager.allRequiredGranted)
@@ -219,8 +239,20 @@ public struct OnboardingView: View {
         }
     }
 
+    /// Leaves the permissions step: to the done screen if shown, else finishes
+    /// straight away (handing control back to the host's own flow).
+    private func advanceFromPermissions() {
+        if configuration.showsDoneStep {
+            go(to: .done)
+        } else {
+            finish()
+        }
+    }
+
     private func autoAdvanceIfReady(_ granted: Bool) {
-        guard granted, step == .permissions else { return }
+        // Only auto-advance into a done screen. With the done step omitted we let
+        // the user tap Continue rather than closing the window from under them.
+        guard granted, step == .permissions, configuration.showsDoneStep else { return }
         if reduceMotion {
             step = .done
             announceDone()

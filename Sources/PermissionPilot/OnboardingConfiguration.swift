@@ -30,6 +30,19 @@ public struct OnboardingConfiguration {
     /// Screen Recording periodically (the Sequoia recurring prompt).
     public var showsScreenRecordingPrewarning: Bool
 
+    /// Whether to show the **welcome** step (default `true`). Set `false` if your
+    /// app has its own intro and you only want the permissions step.
+    public var showsWelcomeStep: Bool
+
+    /// Whether to show the final **"all set"** step (default `true`). Set `false`
+    /// to hand control straight back to your flow once required permissions are
+    /// granted (the wizard finishes on **Continue** instead of showing a done screen).
+    public var showsDoneStep: Bool
+
+    /// Forces the wizard's appearance. `nil` (default) follows the system theme;
+    /// `.light` / `.dark` pin it regardless of the system setting.
+    public var colorScheme: ColorScheme?
+
     public init(
         appName: String,
         appIcon: Image? = nil,
@@ -39,7 +52,10 @@ public struct OnboardingConfiguration {
         doneSubtitle: String? = nil,
         tint: Color? = nil,
         reasons: [Permission: String] = [:],
-        showsScreenRecordingPrewarning: Bool = true
+        showsScreenRecordingPrewarning: Bool = true,
+        showsWelcomeStep: Bool = true,
+        showsDoneStep: Bool = true,
+        colorScheme: ColorScheme? = nil
     ) {
         self.appName = appName
         self.appIcon = appIcon
@@ -50,6 +66,9 @@ public struct OnboardingConfiguration {
         self.tint = tint
         self.reasons = reasons
         self.showsScreenRecordingPrewarning = showsScreenRecordingPrewarning
+        self.showsWelcomeStep = showsWelcomeStep
+        self.showsDoneStep = showsDoneStep
+        self.colorScheme = colorScheme
     }
 
     // MARK: Resolved copy

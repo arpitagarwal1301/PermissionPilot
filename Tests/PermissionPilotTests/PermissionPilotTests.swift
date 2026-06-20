@@ -115,6 +115,19 @@ final class PermissionPilotTests: XCTestCase {
         )
     }
 
+    func testWizardStepOmission() {
+        func steps(welcome: Bool, done: Bool) -> [OnboardingView.Step] {
+            var c = OnboardingConfiguration(appName: "A")
+            c.showsWelcomeStep = welcome
+            c.showsDoneStep = done
+            return OnboardingView.activeSteps(for: c)
+        }
+        XCTAssertEqual(steps(welcome: true, done: true), [.welcome, .permissions, .done])
+        XCTAssertEqual(steps(welcome: false, done: true), [.permissions, .done])
+        XCTAssertEqual(steps(welcome: true, done: false), [.welcome, .permissions])
+        XCTAssertEqual(steps(welcome: false, done: false), [.permissions]) // permissions always present
+    }
+
     func testDefaultInfoIsLocalized() {
         // Proves the .strings lookup resolves against the module bundle — a missing
         // resource would return the key itself ("permission.camera.title").

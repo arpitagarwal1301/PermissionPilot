@@ -69,6 +69,19 @@ embed it? Use `OnboardingView` in your own window/sheet. `PermissionManager` is 
 `@MainActor ObservableObject` that auto re-checks when the user returns from
 System Settings, so SwiftUI views update on their own.
 
+Tailor the flow via `OnboardingConfiguration`:
+
+```swift
+config.showsWelcomeStep = false   // skip the intro (you have your own onboarding)
+config.showsDoneStep    = false   // finish straight back to your flow on Continue
+config.colorScheme      = .dark   // pin light/dark; nil (default) follows the system
+config.tint             = .indigo // accent; icon and per-permission reasons too
+```
+
+> Already have your own onboarding and just want the live permission UI? Skip the
+> wizard entirely and drop `PermissionsView(manager:)` / `PermissionChecklist(manager:)`
+> straight into your views.
+
 <details>
 <summary><b>Components &amp; engine only</b></summary>
 

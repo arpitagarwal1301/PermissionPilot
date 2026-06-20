@@ -7,6 +7,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Wizard customization** via `OnboardingConfiguration`: `showsWelcomeStep` and
+  `showsDoneStep` to omit the intro / "all set" screens (e.g. when the host has
+  its own onboarding and wants only the permissions step), and `colorScheme` to
+  pin light/dark (default `nil` follows the system theme).
 - **Localization.** Every user-facing string now routes through the localization
   system with stable keys and an English base; the SDK is fully translatable
   (ships English only — add a `<lang>.lproj/Localizable.strings` per target to
