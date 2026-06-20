@@ -238,7 +238,7 @@ have one (grants then persist across rebuilds), otherwise ad-hoc signs.
 PermissionPilot imports **no third-party code**. Two MIT-licensed projects were
 studied for approach and are credited here:
 
-- [PermissionFlow](https://github.com/leoxsdy/PermissionFlow) — permission detection / deep-link patterns.
+- [PermissionFlow](https://github.com/jaywcjlove/PermissionFlow) — permission detection / deep-link / drag-to-authorize patterns.
 - [FullDiskAccess](https://github.com/inket/FullDiskAccess) — the Full Disk Access heuristic.
 
 ## License

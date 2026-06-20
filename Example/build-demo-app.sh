@@ -66,6 +66,9 @@ fi
 
 echo "✓ Built: $APP"
 if [ "$OPEN" = "1" ]; then
+  # Quit a previously-running instance so the rebuilt app launches fresh (no stacked windows).
+  osascript -e 'quit app "PermissionPilot Demo"' >/dev/null 2>&1 || true
+  pkill -f "PermissionPilot Demo.app/Contents/MacOS/PermissionPilotDemo" 2>/dev/null || true
   echo "▸ Launching…"
   open "$APP"
 else

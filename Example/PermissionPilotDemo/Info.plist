@@ -20,6 +20,9 @@
     <string>12.0</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <!-- Single instance: reopening activates the running app instead of stacking windows. -->
+    <key>LSMultipleInstancesProhibited</key>
+    <true/>
     <!-- Demonstrates graceful handling; required if you add Camera/Microphone. -->
     <key>NSCameraUsageDescription</key>
     <string>PermissionPilot Demo uses the camera to demonstrate the Camera permission.</string>

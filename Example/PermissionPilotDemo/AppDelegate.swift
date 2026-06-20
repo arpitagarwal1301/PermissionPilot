@@ -29,6 +29,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         true
     }
 
+    // Reopening (Dock click / `open` while running) re-shows the existing main
+    // window instead of spawning another one.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { mainWindow?.makeKeyAndOrderFront(nil) }
+        return true
+    }
+
     // MARK: Onboarding
 
     private func presentOnboarding() {
