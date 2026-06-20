@@ -93,15 +93,18 @@ extension Permission {
         }
     }
 
-    /// Whether granting this permission typically only takes effect after the
-    /// app is quit and reopened (Input Monitoring; pre-Sequoia Screen Recording).
+    /// Whether granting this permission only takes effect after the app is quit
+    /// and reopened.
+    ///
+    /// Input Monitoring (IOKit HID) and Screen Recording (CoreGraphics) both
+    /// capture their authorization for the process's lifetime, so a mid-session
+    /// grant needs a relaunch — macOS still enforces this on macOS 15+/26
+    /// (verified empirically: the OS quits & relaunches the app on grant).
+    /// Accessibility, by contrast, re-evaluates trust live and needs no relaunch.
     public var mayRequireRelaunch: Bool {
         switch self {
-        case .inputMonitoring:
+        case .inputMonitoring, .screenRecording:
             return true
-        case .screenRecording:
-            // Pre-Sequoia only — macOS 15+ applies the grant without a relaunch.
-            if #available(macOS 15, *) { return false } else { return true }
         default:
             return false
         }
