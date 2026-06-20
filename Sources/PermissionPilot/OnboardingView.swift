@@ -98,8 +98,9 @@ public struct OnboardingView: View {
     private var permissionsStep: some View {
         ScrollView {
             VStack(spacing: PPDesign.s16) {
-                PermissionChecklist(
+                PermissionsView(
                     manager: manager,
+                    title: "Permissions needed",
                     reasonOverrides: configuration.reasons
                 )
                 if showsScreenRecordingPrewarning {

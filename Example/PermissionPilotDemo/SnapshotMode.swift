@@ -86,6 +86,25 @@ enum SnapshotMode {
         render(banner, size: NSSize(width: 1160, height: 600), appearance: .darkAqua,
                to: "\(outDir)/flow-hero_dark.png")
 
+        // Permission board (real PermissionsView) — list + grid, full roadmap.
+        NSApp.appearance = NSAppearance(named: .darkAqua)
+        let boardMgr = PermissionManager(
+            required: [.accessibility, .screenRecording, .inputMonitoring],
+            optional: [.fullDiskAccess, .camera, .microphone],
+            statuses: [
+                .accessibility: .granted, .screenRecording: .granted, .inputMonitoring: .denied,
+                .fullDiskAccess: .denied, .camera: .granted, .microphone: .denied,
+            ]
+        )
+        let boardGrid = PermissionsView(manager: boardMgr, permissions: Permission.allCases, defaultLayout: .grid)
+            .environment(\.colorScheme, .dark)
+        render(boardGrid, size: NSSize(width: 600, height: 680), appearance: .darkAqua,
+               to: "\(outDir)/board-grid_dark.png")
+        let boardList = PermissionsView(manager: boardMgr, permissions: Permission.allCases, defaultLayout: .list)
+            .environment(\.colorScheme, .dark)
+        render(boardList, size: NSSize(width: 600, height: 1180), appearance: .darkAqua,
+               to: "\(outDir)/board-list_dark.png")
+
         print("WROTE snapshots to \(outDir)")
     }
 

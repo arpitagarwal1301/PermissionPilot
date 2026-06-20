@@ -25,6 +25,7 @@ enum PermissionProbe {
         case .fullDiskAccess:  return fullDiskAccessStatus()
         case .camera:          return mediaStatus(for: .video)
         case .microphone:      return mediaStatus(for: .audio)
+        default:               return .unknown // not-yet-implemented ("coming soon")
         }
     }
 
@@ -89,6 +90,8 @@ enum PermissionProbe {
     /// - Full Disk Access has no prompt — we deep-link to System Settings.
     @MainActor
     static func request(_ permission: Permission, completion: @escaping (PermissionStatus) -> Void) {
+        // Not-yet-implemented ("coming soon") permissions can't be requested.
+        guard permission.isImplemented else { completion(.unknown); return }
         switch permission {
         case .accessibility:
             let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
@@ -120,6 +123,9 @@ enum PermissionProbe {
         case .fullDiskAccess:
             SystemSettingsLink.open(.fullDiskAccess)
             completion(fullDiskAccessStatus())
+
+        default:
+            completion(.unknown) // unreachable (guarded above); keeps switch exhaustive
         }
     }
 

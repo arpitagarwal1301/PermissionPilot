@@ -114,6 +114,32 @@ final class PermissionPilotTests: XCTestCase {
         XCTAssertNil(Permission.screenRecording.requiredInfoPlistKey)
     }
 
+    // MARK: Implemented vs. coming-soon
+
+    func testImplementedFlag() {
+        // The six the engine supports today.
+        XCTAssertEqual(Permission.implemented.count, 6)
+        for p in [Permission.accessibility, .screenRecording, .inputMonitoring,
+                  .fullDiskAccess, .camera, .microphone] {
+            XCTAssertTrue(p.isImplemented, "\(p) should be implemented")
+        }
+        // The roadmap set.
+        XCTAssertEqual(Permission.comingSoon.count, Permission.allCases.count - 6)
+        XCTAssertTrue(Permission.comingSoon.allSatisfy { !$0.isImplemented })
+        for p in [Permission.bluetooth, .location, .automation, .notifications] {
+            XCTAssertFalse(p.isImplemented, "\(p) should be coming-soon")
+        }
+    }
+
+    func testComingSoonNotDetectableOrPromptable() {
+        // No detection for coming-soon permissions.
+        XCTAssertEqual(PermissionProbe.status(for: .bluetooth), .unknown)
+        XCTAssertEqual(PermissionProbe.status(for: .location), .unknown)
+        // And no in-app prompt path.
+        XCTAssertFalse(Permission.bluetooth.canPromptInApp)
+        XCTAssertFalse(Permission.notifications.canPromptInApp)
+    }
+
     // MARK: Manager
 
     @MainActor

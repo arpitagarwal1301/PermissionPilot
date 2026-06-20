@@ -1,8 +1,9 @@
 import SwiftUI
 import PermissionPilot
 
-/// The demo's main window: the standalone ``PermissionChecklist`` (live status)
-/// plus controls to re-run onboarding and inspect the persisted flag.
+/// The demo's main window: the standalone ``PermissionsView`` (live status, with
+/// the List/Grid toggle and the full permission board incl. "coming soon") plus
+/// controls to re-run onboarding and inspect the persisted flag.
 struct DemoContentView: View {
     @ObservedObject var manager: PermissionManager
     var onReopenOnboarding: () -> Void
@@ -19,7 +20,8 @@ struct DemoContentView: View {
                     .foregroundStyle(.secondary)
             }
 
-            PermissionChecklist(manager: manager)
+            // Full board: implemented permissions + the "coming soon" roadmap.
+            PermissionsView(manager: manager, permissions: Permission.allCases)
 
             HStack(spacing: PPDesign.s12) {
                 Button("Re-run Onboarding", action: onReopenOnboarding)

@@ -12,6 +12,7 @@ public struct PermissionChecklist: View {
     private let reasonOverrides: [Permission: String]
     private let title: String
     private let showsCard: Bool
+    private let showsHeader: Bool
 
     @Environment(\.colorScheme) private var scheme
 
@@ -21,26 +22,31 @@ public struct PermissionChecklist: View {
     ///   - title: Card title (default "Permissions needed").
     ///   - reasonOverrides: Per-permission reason copy overrides.
     ///   - showsCard: Whether to draw the rounded card surface (default `true`).
+    ///   - showsHeader: Whether to draw the title + counter header (default `true`).
+    ///     Set `false` when embedding under a shared header (e.g. ``PermissionsView``).
     public init(
         manager: PermissionManager,
         permissions: [Permission]? = nil,
         title: String = "Permissions needed",
         reasonOverrides: [Permission: String] = [:],
-        showsCard: Bool = true
+        showsCard: Bool = true,
+        showsHeader: Bool = true
     ) {
         self.manager = manager
         self.permissions = permissions ?? manager.allPermissions
         self.title = title
         self.reasonOverrides = reasonOverrides
         self.showsCard = showsCard
+        self.showsHeader = showsHeader
     }
 
     private var grantedCount: Int { manager.grantedCount(of: permissions) }
+    private var implementedCount: Int { permissions.filter(\.isImplemented).count }
 
     public var body: some View {
         VStack(spacing: 0) {
-            header
-            rows
+            if showsHeader { header }
+            rows.padding(.top, showsHeader ? 0 : PPDesign.s4)
         }
         .padding(.horizontal, PPDesign.cardPadding)
         .padding(.bottom, PPDesign.s8)
@@ -54,7 +60,7 @@ public struct PermissionChecklist: View {
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
-            Text("\(grantedCount) of \(permissions.count) enabled")
+            Text("\(grantedCount) of \(implementedCount) enabled")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

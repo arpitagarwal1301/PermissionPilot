@@ -13,9 +13,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         installMainMenu()
 
+        // Track all implemented permissions so the grid reflects them live; the
+        // main window also displays the "coming soon" roadmap (Permission.allCases).
         manager = PermissionManager(
             required: [.accessibility, .screenRecording, .inputMonitoring],
-            optional: [.fullDiskAccess]
+            optional: [.fullDiskAccess, .camera, .microphone]
         )
 
         showMainWindow()
