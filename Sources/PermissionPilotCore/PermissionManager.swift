@@ -208,10 +208,12 @@ public final class PermissionManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
+            guard let self else { return }
+            Task { @MainActor in self.refresh() }
         }
         let timer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
+            guard let self else { return }
+            Task { @MainActor in self.refresh() }
         }
         timer.tolerance = pollInterval * 0.25
         pollTimer = timer
