@@ -4,255 +4,164 @@
 
 # PermissionPilot
 
-**Drop-in SwiftUI onboarding + permissions flow for macOS apps** — Accessibility,
-Screen Recording, Input Monitoring, Full Disk Access, Camera, Microphone.
-**Zero dependencies.**
+**Drop-in SwiftUI onboarding + permissions flow for non–App Store macOS apps.**
+Detects, prompts, deep-links, and onboards across **16 macOS permissions** —
+**zero dependencies**, Apple frameworks only.
 
 ![Platform](https://img.shields.io/badge/platform-macOS%2012%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange)
 ![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Locally-distributed macOS apps (DMG / Homebrew, **not** the Mac App Store) can't
-grant system permissions programmatically — the user has to flip toggles in
-System Settings. Every such app re-invents detection, prompting, deep-linking,
-and onboarding UI. PermissionPilot is that layer, done once, properly:
+Locally-distributed Mac apps (DMG / Homebrew) can't grant TCC permissions
+programmatically — users flip toggles in System Settings, and every app re-invents
+detection, prompting, deep-linking, and onboarding UI. PermissionPilot is that
+layer, done once:
 
-- 🧭 A polished first-run **wizard** (welcome → permissions → done) with a step indicator.
-- ✅ A live **checklist** that flips rows to ✓ and reports "N of M enabled".
-- 🔁 **Auto re-check + auto-advance** when the user returns from System Settings.
-- 🔗 **Deep-links** to the exact Privacy & Security pane, with fallbacks.
-- 🧩 **Composable**: use the engine, the components, or the whole flow.
-- 🧱 Built-in handling of the well-known macOS gotchas (signing/TCC, relaunch, Sequoia re-prompts).
-- 🚫 **No third-party dependencies** — Apple frameworks only.
-
-> The SDK ships **no branding of its own** — every string, icon, and the accent
-> color come from your app, each with a sensible default.
+- 🧭 First-run **wizard** (welcome → permissions → done) with live re-check + auto-advance.
+- ✅ Drop-in **rows / checklist / grid** that flip to ✓ and report "N of M enabled."
+- 🔗 **Deep-links** to the exact Privacy pane; handles the macOS signing / relaunch / Sequoia gotchas.
+- 🧩 **Composable** — engine only, components only, or the whole flow. No SDK branding: your app's name, icon, and accent.
 
 <p align="center">
   <img src="docs/flow.png" alt="PermissionPilot onboarding flow — welcome, grant, done" width="100%">
 </p>
 
-<p align="center"><sub>The first-run wizard: welcome → grant (live checklist + deep-links) → done.</sub></p>
-
----
-
 ## Requirements
 
-- macOS 12+
-- Swift 5.9+ / Xcode 15+
-- A **non-sandboxed** app (these permissions and deep-links are disallowed under the App Sandbox / Mac App Store).
+- macOS 12+, Swift 5.9+ / Xcode 15+
+- A **non-sandboxed** app — TCC deep-links are disallowed under the App Sandbox / Mac App Store.
 
-## Installation
+## Install
 
-Swift Package Manager. In Xcode: **File ▸ Add Package Dependencies…** and enter the
-repo URL, or add it to your `Package.swift`:
+Swift Package Manager:
 
 ```swift
-dependencies: [
-    .package(url: "https://github.com/arpitagarwal1301/PermissionPilot.git", from: "0.1.0")
-],
-targets: [
-    .target(name: "MyApp", dependencies: [
-        .product(name: "PermissionPilot", package: "PermissionPilot")
-    ])
-]
+.package(url: "https://github.com/arpitagarwal1301/PermissionPilot.git", from: "0.1.0")
 ```
 
-Three products, each usable on its own:
+Depend on **`PermissionPilot`** for the full wizard (it re-exports the other two).
+For finer-grained use: **`PermissionPilotUI`** (components) or **`PermissionPilotCore`**
+(engine, no UI).
 
-| Product | Contains | Use when |
-|---|---|---|
-| `PermissionPilotCore` | model + `PermissionManager` engine, no UI | you only want detection/logic |
-| `PermissionPilotUI` | `PermissionRow`, `PermissionChecklist`, `JustInTimePermissionButton` | you have your own onboarding |
-| `PermissionPilot` | the full wizard (re-exports Core + UI) | you want the whole experience |
-
-`import PermissionPilot` re-exports the other two, so one import is enough.
-
----
-
-## Quick start — the full wizard
+## Quick start
 
 ```swift
 import PermissionPilot
 
 let permissions = PermissionManager(
-    required: [.accessibility, .screenRecording, .inputMonitoring],
-    optional: [.fullDiskAccess]
+    required: [.accessibility, .screenRecording],
+    optional: [.fullDiskAccess, .camera]
 )
 
 var config = OnboardingConfiguration(appName: "YourApp")
-config.appIcon = Image("AppIcon")          // optional; neutral placeholder otherwise
-config.reasons = [                          // host-overridable one-line "why"
-    .accessibility:   "So YourApp can resize windows with your hotkey.",
-    .screenRecording: "So YourApp can capture the window you're sharing.",
-]
+config.appIcon = Image("AppIcon")                  // optional; neutral placeholder otherwise
+config.reasons = [.accessibility: "So YourApp can resize windows with your hotkey."]
 
-PermissionPilot.presentOnboarding(manager: permissions, configuration: config) {
-    print("Onboarding finished — completion persisted")
-}
-```
-
-Show it once on first run and let users re-open it later:
-
-```swift
 if !PermissionPilot.hasCompletedOnboarding {
     PermissionPilot.presentOnboarding(manager: permissions, configuration: config)
 }
-// later, from a Settings item:
-PermissionPilot.resetOnboarding()   // or just call presentOnboarding again
 ```
 
-`presentOnboarding` opens a real, titled `NSWindow` (genuine traffic-light
-chrome — nothing is faked). Prefer to embed it yourself? Use `OnboardingView`
-directly in any window or sheet.
+`presentOnboarding` opens a real, titled `NSWindow` (no faked chrome). Prefer to
+embed it? Use `OnboardingView` in your own window/sheet. `PermissionManager` is an
+`@MainActor ObservableObject` that auto re-checks when the user returns from
+System Settings, so SwiftUI views update on their own.
 
-## Components only
-
-```swift
-import PermissionPilotUI
-
-struct SetupView: View {
-    @StateObject var permissions = PermissionManager(required: [.accessibility, .camera])
-    var body: some View {
-        PermissionChecklist(manager: permissions)   // card + "N of M enabled" + live rows
-    }
-}
-```
-
-Just-in-time, at the point of use:
+<details>
+<summary><b>Components &amp; engine only</b></summary>
 
 ```swift
+// Components — drop into your own onboarding UI:
+PermissionChecklist(manager: permissions)                       // card + counter + live rows
+PermissionsView(manager: permissions)                           // adds a List ⇄ Grid toggle
 JustInTimePermissionButton(manager: permissions, permission: .camera)
+
+// Engine — no UI:
+permissions.refresh()                                           // re-detect now
+permissions.request(.screenRecording)                           // prompt or deep-link
+permissions.status(for: .screenRecording)                       // .granted / .denied / …
+permissions.allRequiredGranted
 ```
 
-## Engine only
+Theme with `OnboardingConfiguration(appName:tint:)` or `.permissionPilotTint(_:)`
+on any subtree. Colors are system-semantic (adapt to dark mode / contrast /
+accent); green means granted only, and status is never conveyed by color alone
+(VoiceOver reads it out).
+</details>
 
-```swift
-import PermissionPilotCore
+## ⚠️ The two things that will bite you
 
-let permissions = PermissionManager(required: [.screenRecording])
-permissions.refresh()                                  // re-detect now
-permissions.request(.screenRecording)                  // prompt or deep-link
-if permissions.allRequiredGranted { /* … */ }
-let status = permissions.status(for: .screenRecording) // .granted / .denied / …
-```
+**1 — Info.plist usage strings.** A prompt-based permission **crashes the app on
+first request** without its usage-description key (PermissionPilot asserts and
+fails gracefully instead of crashing, but the permission won't work until you add
+it). Add the keys you use: `NSCameraUsageDescription`, `NSMicrophoneUsageDescription`,
+`NSContactsUsageDescription`, `NSPhotoLibraryUsageDescription`,
+`NSLocationWhenInUseUsageDescription`, `NSSpeechRecognitionUsageDescription`,
+`NSBluetoothAlwaysUsageDescription`. **Calendars/Reminders need both** the macOS
+14+ `…FullAccessUsageDescription` and the 12–13 legacy key. (Notifications,
+Accessibility, Screen Recording, Input Monitoring need none.)
 
-`PermissionManager` is an `@MainActor ObservableObject`. It re-checks on
-`NSApplication.didBecomeActiveNotification` plus a light fallback poll, so your
-SwiftUI views update automatically when the user returns from System Settings.
+**2 — Code-signing & TCC persistence.** macOS ties every grant to your **code
+signature + bundle ID**. Ad-hoc / unsigned / changing signatures look like a "new
+app" on each rebuild and **drop all grants**. Sign with a **stable identity**
+(Apple Development in dev; **Developer ID + notarization** for distribution) and
+keep the bundle ID constant. Recover a stuck state with
+`tccutil reset <Service> <bundle-id>`. On **MDM-managed Macs**, corporate PPPC
+policy can silently suppress prompts for non-notarized apps. PermissionPilot
+surfaces these states clearly but **cannot fix signing** — that's your build setup.
 
-### Theming
-
-```swift
-OnboardingConfiguration(appName: "YourApp", tint: .indigo)   // accent override
-// or on any component subtree:
-PermissionChecklist(manager: permissions).permissionPilotTint(.indigo)
-```
-
-Colors are **system semantic** colors, so the UI adapts to dark mode,
-increase-contrast, and the user's accent automatically. Green is reserved for the
-granted state only; status is never conveyed by color alone (VoiceOver reads it out).
-
----
-
-## Per-permission reference
+<details>
+<summary><b>Per-permission reference</b> — detection · prompt · Settings anchor · Info.plist key</summary>
 
 | Permission | Detection | In-app prompt? | Settings anchor | Info.plist key |
 |---|---|---|---|---|
-| Accessibility | `AXIsProcessTrusted` | system prompt → Settings | `Privacy_Accessibility` | `NSAccessibilityUsageDescription` (optional) |
+| Accessibility | `AXIsProcessTrusted` | system prompt → Settings | `Privacy_Accessibility` | — |
 | Screen Recording | `CGPreflightScreenCaptureAccess` | `CGRequestScreenCaptureAccess` | `Privacy_ScreenCapture` | — |
 | Input Monitoring | `IOHIDCheckAccess(.listenEvent)` | `IOHIDRequestAccess` | `Privacy_ListenEvent` | — |
 | Camera | `AVCaptureDevice.authorizationStatus(.video)` | `requestAccess(.video)` | `Privacy_Camera` | **`NSCameraUsageDescription`** |
 | Microphone | `AVCaptureDevice.authorizationStatus(.audio)` | `requestAccess(.audio)` | `Privacy_Microphone` | **`NSMicrophoneUsageDescription`** |
+| Location | `CLLocationManager.authorizationStatus` | `requestWhenInUseAuthorization` | `Privacy_LocationServices` | **`NSLocationWhenInUseUsageDescription`** |
+| Contacts | `CNContactStore.authorizationStatus(.contacts)` | `requestAccess(.contacts)` | `Privacy_Contacts` | **`NSContactsUsageDescription`** |
+| Calendars | `EKEventStore.authorizationStatus(.event)` | `requestFullAccessToEvents`¹ | `Privacy_Calendars` | **`NSCalendarsFullAccessUsageDescription`**¹ |
+| Reminders | `EKEventStore.authorizationStatus(.reminder)` | `requestFullAccessToReminders`¹ | `Privacy_Reminders` | **`NSRemindersFullAccessUsageDescription`**¹ |
+| Photos | `PHPhotoLibrary.authorizationStatus(.readWrite)` | `requestAuthorization(.readWrite)` | `Privacy_Photos` | **`NSPhotoLibraryUsageDescription`** |
+| Speech Recognition | `SFSpeechRecognizer.authorizationStatus` | `requestAuthorization` | `Privacy_SpeechRecognition` | **`NSSpeechRecognitionUsageDescription`** |
+| Bluetooth | `CBManager.authorization` | instantiate `CBCentralManager` | `Privacy_Bluetooth` | **`NSBluetoothAlwaysUsageDescription`** |
+| Notifications | `getNotificationSettings` (async) | `requestAuthorization` | — | — |
 | Full Disk Access | heuristic read of a TCC-protected path | none — deep-link only | `Privacy_AllFiles` | — |
+| Automation | none — per-target Apple Events | none — deep-link only | `Privacy_Automation` | — |
+| Local Network | none — no status API (macOS 15+) | none — deep-link only | `Privacy_LocalNetwork` | — |
 
-### Info.plist usage strings (required for Camera/Microphone)
+¹ macOS 14+ uses `requestFullAccessTo…` + the `…FullAccessUsageDescription` keys;
+12–13 use `requestAccess(to:)` + legacy `NSCalendarsUsageDescription` /
+`NSRemindersUsageDescription`. PermissionPilot picks the right API/key per OS.
 
-Camera and Microphone **crash the app on first access** without their usage
-strings. Add them to your app target's Info.plist:
-
-```xml
-<key>NSCameraUsageDescription</key>
-<string>YourApp uses the camera for video features.</string>
-<key>NSMicrophoneUsageDescription</key>
-<string>YourApp uses the microphone for audio features.</string>
-```
-
----
-
-## ⚠️ Code-signing & TCC persistence (read this)
-
-This is the single most common reason "permissions keep resetting." macOS ties a
-TCC grant to your app's **code signature + bundle identifier**. If either changes,
-the grant is lost.
-
-- **Ad-hoc / unsigned / changing signatures** → the system sees a "new" app on
-  every rebuild and **drops every grant**. You'll re-authorize forever.
-- **Fix:** sign with a **stable identity** — an Apple Development identity in dev,
-  a **Developer ID** identity for distribution — and keep the **bundle ID and
-  install path constant**.
-- **Recover a stuck state:** `tccutil reset <Service> <bundle-id>`
-  (e.g. `tccutil reset ScreenCapture com.yourcompany.yourapp`).
-- **Distribution:** these apps are non-sandboxed; for smooth local distribution,
-  **Developer ID + notarization** is effectively required (otherwise Gatekeeper
-  friction and flaky TCC).
-
-PermissionPilot surfaces these states clearly — but it **cannot fix signing**.
-That's on your build setup.
-
-## Other gotchas (handled in the flow)
-
-- **Relaunch to take effect** — Input Monitoring (and pre-Sequoia Screen
-  Recording) only apply after quit & reopen. The wizard shows a **Quit & Reopen**
-  affordance (`manager.quitAndReopen()`).
-- **Sequoia recurring Screen Recording prompt** — macOS re-asks periodically;
-  there's no entitlement to suppress it. The wizard pre-warns in copy
-  (`OnboardingConfiguration.showsScreenRecordingPrewarning`).
-- **Stale `CGPreflight` snapshot** — detection is always queried fresh, never
-  cached, so a mid-session change isn't masked.
-- **Full Disk Access has no API** — detection is a heuristic read of a
-  TCC-protected file; there's no prompt, only the deep-link.
-
----
+Notes: **Notifications** status is async-only (served from a cache, auto-refreshed).
+**Input Monitoring** and pre-Sequoia **Screen Recording** only apply after a quit &
+reopen — the wizard surfaces a **Quit & Reopen** button (`manager.quitAndReopen()`).
+**Automation / Local Network / Full Disk Access** are deep-link-only (no honest
+in-app prompt), so their rows always open System Settings.
+</details>
 
 ## Example app
-
-A runnable demo lives in [`Example/PermissionPilotDemo`](Example/PermissionPilotDemo)
-— the full wizard with four permissions plus a live status window and "re-run
-onboarding" controls.
-
-**To actually test permission toggling, run it as a signed `.app` bundle:**
 
 ```bash
 Example/build-demo-app.sh --open
 ```
 
-This builds, bundles, signs, and launches **PermissionPilot Demo** as its own
-app — so it appears under that name in System Settings and permission toggles
-take effect (Accessibility live; Input Monitoring after the built-in Quit &
-Reopen). The script uses your Apple Development / Developer ID identity if you
-have one (grants then persist across rebuilds), otherwise ad-hoc signs.
+Builds, signs, and launches the demo as its own `.app` — so TCC attributes
+permissions to it (not your terminal) and toggles take effect. The full wizard
+plus a status window showing all 16 permissions (List ⇄ Grid).
 
-> **Don't test permissions with `swift run PermissionPilotDemo`.** That produces
-> an *unbundled, unsigned* binary, so macOS attributes its permission requests
-> to the **responsible parent process** (your terminal) — System Settings shows
-> the wrong app and toggles never reflect back to the demo. `swift run` is fine
-> for a quick look at the UI, nothing more. (This is the same code-signing/TCC
-> rule described above — it applies to *your* app too.)
+> **Don't** test permissions with `swift run PermissionPilotDemo`: an unbundled,
+> unsigned binary is attributed to the **responsible parent process** (your
+> terminal), so System Settings shows the wrong app and toggles never stick. Same
+> code-signing/TCC rule as above — it applies to your app too.
 
----
+## License & credits
 
-## Credits
-
-PermissionPilot imports **no third-party code** and is implemented independently
-on Apple frameworks — detection, deep-links, the onboarding wizard, and
-drag-to-authorize are all original.
-
-The Full Disk Access check uses the well-known technique of probing a
-TCC-protected file, as also used by the MIT-licensed
+[MIT](LICENSE). No third-party code — detection, deep-links, the wizard, and
+drag-to-authorize are original. The Full Disk Access check uses the
+TCC-protected-file probe technique, as also used by the MIT-licensed
 [FullDiskAccess](https://github.com/inket/FullDiskAccess).
-
-## License
-
-[MIT](LICENSE).
