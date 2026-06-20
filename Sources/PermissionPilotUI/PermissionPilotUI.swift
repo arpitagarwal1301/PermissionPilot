@@ -1,10 +1,13 @@
 // PermissionPilotUI — status rows + checklist (depends on Core).
 //
-// Scaffold stub. Per-permission rows and the multi-permission checklist view
-// are implemented per docs/CLAUDE_CODE_BUILD_PROMPT.md after approval.
+// Drop-in SwiftUI components for developers who already have their own
+// onboarding: ``PermissionRow``, ``PermissionChecklist``,
+// ``JustInTimePermissionButton``, and the shared ``StepIndicator``.
+//
+// Everything is built on system semantic colors and SF Symbols, supports
+// light/dark + reduce-motion + VoiceOver, and never conveys status by color alone.
 
 import SwiftUI
-import PermissionPilotCore
 
 /// Namespace marker for the PermissionPilotUI module.
 public enum PermissionPilotUI {}
