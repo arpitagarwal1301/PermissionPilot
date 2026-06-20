@@ -1,14 +1,20 @@
 // PermissionPilotCore — engine (no UI).
 //
-// Scaffold stub. The detection / request / deep-link engine, the declarative
-// permission model, and the `@MainActor` ObservableObject manager are
-// implemented per docs/CLAUDE_CODE_BUILD_PROMPT.md after the scaffold is
-// approved.
+// A zero-dependency permission model + manager for locally-distributed
+// (non–App Store) macOS apps. Detects status, triggers in-app prompts where the
+// OS allows, opens System Settings deep-links, and re-checks on app activation.
+//
+// Built entirely on Apple frameworks: Foundation, AppKit, ApplicationServices,
+// CoreGraphics, AVFoundation, IOKit.hid. No third-party dependencies.
+//
+// The Full Disk Access heuristic and several detection approaches are informed
+// by two MIT-licensed projects — PermissionFlow and FullDiskAccess — studied for
+// approach and credited here, but never imported.
 
 import Foundation
 
-/// Namespace + version marker for the PermissionPilotCore module.
+/// Namespace + version marker for PermissionPilot.
 public enum PermissionPilotCore {
-    /// SDK version placeholder. Replaced with real semantic versioning later.
-    public static let version = "0.0.1"
+    /// Semantic version of the SDK.
+    public static let version = "0.1.0"
 }
