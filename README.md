@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/hero.svg" alt="PermissionPilot — drop-in SwiftUI onboarding + permissions for macOS apps" width="100%">
+</p>
+
 # PermissionPilot
 
 **Drop-in SwiftUI onboarding + permissions flow for macOS apps** — Accessibility,
