@@ -158,20 +158,33 @@ reopen — the wizard surfaces a **Quit & Reopen** button (`manager.quitAndReope
 in-app prompt), so their rows always open System Settings.
 </details>
 
-## Example app
+## Try the demo
+
+Download **[PermissionPilot-Demo.dmg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.dmg)**
+(universal) and run it — the full wizard plus a live status window showing all 16
+permissions (List ⇄ Grid). No build required; good for evaluating the flow before
+you integrate.
+
+It's **ad-hoc signed, not notarized** (it's a dev tool, not a shipping app), so
+macOS Gatekeeper warns on first launch. Open it once via either:
+
+- **Right-click** the app → **Open** → **Open**, or
+- `xattr -dr com.apple.quarantine "/Applications/PermissionPilot Demo.app"`
+
+> For your *own* app, sign with a stable identity (Developer ID + notarization for
+> distribution) — see the code-signing note above. The demo is ad-hoc only because
+> this repo ships no paid Developer ID.
+
+### Build it yourself
 
 ```bash
 Example/build-demo-app.sh --open
 ```
 
-Builds, signs, and launches the demo as its own `.app` — so TCC attributes
-permissions to it (not your terminal) and toggles take effect. The full wizard
-plus a status window showing all 16 permissions (List ⇄ Grid).
-
-> **Don't** test permissions with `swift run PermissionPilotDemo`: an unbundled,
-> unsigned binary is attributed to the **responsible parent process** (your
-> terminal), so System Settings shows the wrong app and toggles never stick. Same
-> code-signing/TCC rule as above — it applies to your app too.
+Builds, signs (with your local identity), and launches the demo as its own `.app`.
+**Don't** test permissions with `swift run PermissionPilotDemo`: an unbundled,
+unsigned binary is attributed to the **responsible parent process** (your
+terminal), so System Settings shows the wrong app and toggles never stick.
 
 ## License & credits
 

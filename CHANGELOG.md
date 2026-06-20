@@ -7,6 +7,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Downloadable demo** — a universal, ad-hoc-signed `.dmg` (built via
+  `Example/make-dmg.sh`) attached to the GitHub release, so devs can evaluate the
+  flow without building. Not notarized; open via right-click → Open.
 - **Wizard customization** via `OnboardingConfiguration`: `showsWelcomeStep` and
   `showsDoneStep` to omit the intro / "all set" screens (e.g. when the host has
   its own onboarding and wants only the permissions step), and `colorScheme` to
