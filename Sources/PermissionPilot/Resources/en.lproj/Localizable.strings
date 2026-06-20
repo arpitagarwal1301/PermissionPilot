@@ -1,0 +1,14 @@
+/* PermissionPilot (wizard) — base (English) localizations.
+   %@ is the host app name (OnboardingConfiguration.appName). */
+
+"onboarding.welcome.headline" = "Welcome to %@";
+"onboarding.welcome.subtitle" = "%@ needs a few macOS permissions to work — this takes about a minute.";
+"onboarding.done.title" = "You're all set";
+"onboarding.done.subtitle" = "%@ has everything it needs. You can change these anytime in System Settings.";
+"onboarding.permissionsTitle" = "Permissions needed";
+"onboarding.screenRecordingPrewarning" = "macOS may ask you to re-confirm Screen Recording periodically — that's expected.";
+"onboarding.getStarted" = "Get Started";
+"onboarding.back" = "Back";
+"onboarding.continue" = "Continue";
+"onboarding.finish" = "Finish";
+"onboarding.announceDone" = "All set. %@";

@@ -71,103 +71,32 @@ extension Permission {
     /// Hosts may override the reason (and title) via `infoOverrides` on
     /// ``PermissionManager`` or the wizard configuration.
     public var defaultInfo: PermissionInfo {
+        PermissionInfo(
+            title: ppLocalized("permission.\(rawValue).title"),
+            reason: ppLocalized("permission.\(rawValue).reason"),
+            systemImage: systemImage
+        )
+    }
+
+    /// The SF Symbol shown for this permission.
+    private var systemImage: String {
         switch self {
-        case .accessibility:
-            return PermissionInfo(
-                title: "Accessibility",
-                reason: "Control your Mac to automate actions and read on-screen content.",
-                systemImage: "accessibility"
-            )
-        case .screenRecording:
-            return PermissionInfo(
-                title: "Screen Recording",
-                reason: "Capture your screen to share, record, or analyze what’s on it.",
-                systemImage: "display"
-            )
-        case .inputMonitoring:
-            return PermissionInfo(
-                title: "Input Monitoring",
-                reason: "Detect keyboard and pointer input for shortcuts and automation.",
-                systemImage: "keyboard"
-            )
-        case .fullDiskAccess:
-            return PermissionInfo(
-                title: "Full Disk Access",
-                reason: "Read files across your Mac that are normally protected.",
-                systemImage: "internaldrive"
-            )
-        case .camera:
-            return PermissionInfo(
-                title: "Camera",
-                reason: "Use your camera for video features.",
-                systemImage: "camera"
-            )
-        case .microphone:
-            return PermissionInfo(
-                title: "Microphone",
-                reason: "Use your microphone for audio features.",
-                systemImage: "mic"
-            )
-        case .bluetooth:
-            return PermissionInfo(
-                title: "Bluetooth",
-                reason: "Discover and connect to nearby Bluetooth devices.",
-                systemImage: "antenna.radiowaves.left.and.right"
-            )
-        case .location:
-            return PermissionInfo(
-                title: "Location",
-                reason: "Access your location.",
-                systemImage: "location"
-            )
-        case .calendars:
-            return PermissionInfo(
-                title: "Calendars",
-                reason: "Read and write your calendar events.",
-                systemImage: "calendar"
-            )
-        case .contacts:
-            return PermissionInfo(
-                title: "Contacts",
-                reason: "Access your contacts.",
-                systemImage: "person.crop.circle"
-            )
-        case .reminders:
-            return PermissionInfo(
-                title: "Reminders",
-                reason: "Read and write your reminders.",
-                systemImage: "list.bullet"
-            )
-        case .photos:
-            return PermissionInfo(
-                title: "Photos",
-                reason: "Access your photo library.",
-                systemImage: "photo.on.rectangle"
-            )
-        case .notifications:
-            return PermissionInfo(
-                title: "Notifications",
-                reason: "Send you notifications.",
-                systemImage: "bell"
-            )
-        case .speechRecognition:
-            return PermissionInfo(
-                title: "Speech Recognition",
-                reason: "Transcribe your speech.",
-                systemImage: "waveform"
-            )
-        case .automation:
-            return PermissionInfo(
-                title: "Automation",
-                reason: "Control other apps via Apple Events.",
-                systemImage: "gearshape.2"
-            )
-        case .localNetwork:
-            return PermissionInfo(
-                title: "Local Network",
-                reason: "Find and connect to devices on your local network.",
-                systemImage: "network"
-            )
+        case .accessibility:     return "accessibility"
+        case .screenRecording:   return "display"
+        case .inputMonitoring:   return "keyboard"
+        case .fullDiskAccess:    return "internaldrive"
+        case .camera:            return "camera"
+        case .microphone:        return "mic"
+        case .bluetooth:         return "antenna.radiowaves.left.and.right"
+        case .location:          return "location"
+        case .calendars:         return "calendar"
+        case .contacts:          return "person.crop.circle"
+        case .reminders:         return "list.bullet"
+        case .photos:            return "photo.on.rectangle"
+        case .notifications:     return "bell"
+        case .speechRecognition: return "waveform"
+        case .automation:        return "gearshape.2"
+        case .localNetwork:      return "network"
         }
     }
 

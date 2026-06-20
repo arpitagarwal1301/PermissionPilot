@@ -40,6 +40,15 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/$PRODUCT"
 cp "$PLIST" "$APP/Contents/Info.plist"
 
+# Copy SwiftPM resource bundles (e.g. localizations) into the app so
+# `Bundle.module` resolves at runtime. Without these the first localized lookup
+# crashes — Bundle.module calls fatalError when it can't find its bundle.
+shopt -s nullglob
+for b in ".build/$CONFIG/"*.bundle; do
+  cp -R "$b" "$APP/Contents/Resources/"
+done
+shopt -u nullglob
+
 # --- Signing ---------------------------------------------------------------
 # Why this matters: TCC ties a permission grant to the app's code signature. A
 # real Apple identity gives a stable, trusted signature so grants stick and

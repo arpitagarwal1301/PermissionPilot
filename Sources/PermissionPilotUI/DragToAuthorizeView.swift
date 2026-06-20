@@ -45,7 +45,7 @@ public struct DragToAuthorizeView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: PPDesign.s16) {
             VStack(alignment: .leading, spacing: PPDesign.s4) {
-                Text("Give \(appName) \(permissionTitle)")
+                Text(ppFormat("drag.title", appName, permissionTitle))
                     .font(.headline)
                     .foregroundStyle(.primary)
                 Text(subtitle)
@@ -75,21 +75,21 @@ public struct DragToAuthorizeView: View {
 
     private var subtitle: String {
         if permission.supportsManualAdd {
-            return "macOS can’t ask for this one — add \(appName) to the list yourself."
+            return ppFormat("drag.subtitle.manualAdd", appName)
         } else if permission.canPromptInApp {
-            return "macOS will ask once — just click Allow."
+            return ppLocalized("drag.subtitle.prompt")
         } else {
-            return "macOS doesn’t prompt for this — open Settings and switch \(appName) on."
+            return ppFormat("drag.subtitle.deepLink", appName)
         }
     }
 
     private var footerNote: String {
         if permission.supportsManualAdd {
-            return "Already in the list? Just switch it on."
+            return ppLocalized("drag.footer.manualAdd")
         } else if permission.canPromptInApp {
-            return "\(appName) appears in the \(permissionTitle) list only after you respond."
+            return ppFormat("drag.footer.prompt", appName, permissionTitle)
         } else {
-            return "\(appName) appears in the \(permissionTitle) list once it first uses this."
+            return ppFormat("drag.footer.deepLink", appName, permissionTitle)
         }
     }
 
@@ -97,15 +97,15 @@ public struct DragToAuthorizeView: View {
 
     @ViewBuilder
     private var manualAddSteps: some View {
-        stepRow(1, "Open the \(permissionTitle) list:") {
-            Button("Open System Settings") { manager.request(permission) }
+        stepRow(1, ppFormat("drag.step.openList", permissionTitle)) {
+            Button(ppLocalized("action.openSettings")) { manager.request(permission) }
                 .buttonStyle(.borderedProminent)
                 .applyingPermissionPilotTint(tint)
         }
-        stepRow(2, "Drag \(appName) in — or click + there and pick it:") {
+        stepRow(2, ppFormat("drag.step.drag", appName)) {
             HStack(alignment: .center, spacing: PPDesign.s16) {
                 dragZone
-                Button("Reveal in Finder") {
+                Button(ppLocalized("action.revealInFinder")) {
                     NSWorkspace.shared.activateFileViewerSelecting([appURL])
                 }
             }
@@ -115,16 +115,16 @@ public struct DragToAuthorizeView: View {
     @ViewBuilder
     private var promptSteps: some View {
         VStack(alignment: .leading, spacing: PPDesign.s8) {
-            Button("Allow Access…") { manager.request(permission) }
+            Button(ppLocalized("action.allowAccess")) { manager.request(permission) }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .frame(maxWidth: .infinity)
                 .applyingPermissionPilotTint(tint)
             HStack(spacing: 4) {
-                Text("Already denied?")
+                Text(ppLocalized("drag.alreadyDenied"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                Button("Open System Settings") { manager.openSettings(for: permission) }
+                Button(ppLocalized("action.openSettings")) { manager.openSettings(for: permission) }
                     .buttonStyle(.link)
                     .font(.footnote)
             }
@@ -136,12 +136,12 @@ public struct DragToAuthorizeView: View {
     @ViewBuilder
     private var deepLinkSteps: some View {
         VStack(alignment: .leading, spacing: PPDesign.s8) {
-            Button("Open System Settings") { manager.openSettings(for: permission) }
+            Button(ppLocalized("action.openSettings")) { manager.openSettings(for: permission) }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .frame(maxWidth: .infinity)
                 .applyingPermissionPilotTint(tint)
-            Text("Then switch \(appName) on in the \(permissionTitle) list.")
+            Text(ppFormat("drag.deepLink.hint", appName, permissionTitle))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -185,7 +185,7 @@ public struct DragToAuthorizeView: View {
                 .resizable()
                 .frame(width: 58, height: 58)
                 .onDrag { NSItemProvider(contentsOf: appURL) ?? NSItemProvider() }
-            Text("↗ Drag me into the list")
+            Text(ppLocalized("drag.zone.label"))
                 .font(.caption.weight(.bold))
                 .foregroundStyle(accent)
         }
@@ -210,9 +210,9 @@ public struct DragToAuthorizeView: View {
                 pulse = true
             }
         }
-        .help("Drag into the \(permissionTitle) list in System Settings")
+        .help(ppFormat("drag.zone.help", permissionTitle))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(appName) icon. Drag it into the System Settings list.")
+        .accessibilityLabel(ppFormat("drag.zone.a11y", appName))
     }
 }
 

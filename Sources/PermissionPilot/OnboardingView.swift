@@ -87,7 +87,7 @@ public struct OnboardingView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 420)
             }
-            Button("Get Started") { go(to: .permissions) }
+            Button(ppLocalized("onboarding.getStarted")) { go(to: .permissions) }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .padding(.top, PPDesign.s8)
@@ -101,13 +101,13 @@ public struct OnboardingView: View {
         VStack(spacing: PPDesign.s12) {
             PermissionsView(
                 manager: manager,
-                title: "Permissions needed",
+                title: ppLocalized("onboarding.permissionsTitle"),
                 reasonOverrides: configuration.reasons
             )
             .frame(maxHeight: .infinity)
             if showsScreenRecordingPrewarning {
                 Label(
-                    "macOS may ask you to re-confirm Screen Recording periodically — that's expected.",
+                    ppLocalized("onboarding.screenRecordingPrewarning"),
                     systemImage: "info.circle"
                 )
                 .font(.footnote)
@@ -138,7 +138,7 @@ public struct OnboardingView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 420)
             }
-            Button("Finish") { finish() }
+            Button(ppLocalized("onboarding.finish")) { finish() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
         }
@@ -189,11 +189,11 @@ public struct OnboardingView: View {
     // so finishing is never blocked on an optional permission.
     private var bottomBar: some View {
         HStack {
-            Button("Back") { go(to: .welcome) }
+            Button(ppLocalized("onboarding.back")) { go(to: .welcome) }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
             Spacer()
-            Button("Continue") { go(to: .done) }
+            Button(ppLocalized("onboarding.continue")) { go(to: .done) }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .disabled(!manager.allRequiredGranted)
@@ -243,7 +243,7 @@ public struct OnboardingView: View {
             element: element,
             notification: .announcementRequested,
             userInfo: [
-                .announcement: "All set. \(configuration.doneTitle)",
+                .announcement: ppFormat("onboarding.announceDone", configuration.doneTitle),
                 .priority: NSAccessibilityPriorityLevel.high.rawValue,
             ]
         )

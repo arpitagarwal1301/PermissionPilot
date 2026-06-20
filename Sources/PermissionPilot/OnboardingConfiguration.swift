@@ -35,7 +35,7 @@ public struct OnboardingConfiguration {
         appIcon: Image? = nil,
         welcomeHeadline: String? = nil,
         welcomeSubtitle: String? = nil,
-        doneTitle: String = "You're all set",
+        doneTitle: String? = nil,
         doneSubtitle: String? = nil,
         tint: Color? = nil,
         reasons: [Permission: String] = [:],
@@ -45,7 +45,7 @@ public struct OnboardingConfiguration {
         self.appIcon = appIcon
         self.welcomeHeadline = welcomeHeadline
         self.welcomeSubtitle = welcomeSubtitle
-        self.doneTitle = doneTitle
+        self.doneTitle = doneTitle ?? ppLocalized("onboarding.done.title")
         self.doneSubtitle = doneSubtitle
         self.tint = tint
         self.reasons = reasons
@@ -55,14 +55,14 @@ public struct OnboardingConfiguration {
     // MARK: Resolved copy
 
     var resolvedWelcomeHeadline: String {
-        welcomeHeadline ?? "Welcome to \(appName)"
+        welcomeHeadline ?? ppFormat("onboarding.welcome.headline", appName)
     }
 
     var resolvedWelcomeSubtitle: String {
-        welcomeSubtitle ?? "\(appName) needs a few macOS permissions to work — this takes about a minute."
+        welcomeSubtitle ?? ppFormat("onboarding.welcome.subtitle", appName)
     }
 
     var resolvedDoneSubtitle: String {
-        doneSubtitle ?? "\(appName) has everything it needs. You can change these anytime in System Settings."
+        doneSubtitle ?? ppFormat("onboarding.done.subtitle", appName)
     }
 }

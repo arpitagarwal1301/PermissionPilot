@@ -35,6 +35,6 @@ public struct StepIndicator: View {
             }
         }
         .accessibilityElement()
-        .accessibilityLabel(Text("Step \(current + 1) of \(total)"))
+        .accessibilityLabel(Text(ppFormat("step.indicator", current + 1, total)))
     }
 }

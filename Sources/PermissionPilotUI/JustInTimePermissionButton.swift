@@ -29,14 +29,14 @@ public struct JustInTimePermissionButton: View {
     }
 
     private var isGranted: Bool { manager.status(for: permission) == .granted }
-    private var title: String { label ?? "Enable \(manager.info(for: permission).title)" }
+    private var title: String { label ?? ppFormat("action.enable.named", manager.info(for: permission).title) }
 
     public var body: some View {
         if isGranted {
-            Label("Granted", systemImage: "checkmark.circle.fill")
+            Label(ppLocalized("state.granted"), systemImage: "checkmark.circle.fill")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(PPColor.granted)
-                .accessibilityLabel("\(manager.info(for: permission).title) granted")
+                .accessibilityLabel(ppFormat("jit.a11y.granted", manager.info(for: permission).title))
         } else {
             Button(title) { manager.request(permission) }
                 .buttonStyle(.borderedProminent)

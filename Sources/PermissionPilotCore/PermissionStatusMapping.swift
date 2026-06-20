@@ -89,24 +89,18 @@ extension PermissionStatus {
         }
     }
 
-    /// Maps an `EKAuthorizationStatus` (calendars / reminders). macOS 14+ reports
-    /// `.fullAccess` / `.writeOnly`; earlier it reports `.authorized`. Write-only
-    /// still lets the host write, so it counts as granted.
+    /// Maps an `EKAuthorizationStatus` (calendars / reminders). The case set is
+    /// availability- and deprecation-churned (`.authorized` ⇄ `.fullAccess` share
+    /// raw value 3; `.writeOnly` is macOS 14+), which makes a case-based switch
+    /// either warn ("not exhaustive") or emit deprecation warnings. The raw values
+    /// are stable EventKit ABI, so we map on them: 3 = authorized/fullAccess and
+    /// 4 = writeOnly both permit access → granted.
     static func from(_ status: EKAuthorizationStatus) -> PermissionStatus {
-        if #available(macOS 14.0, *) {
-            switch status {
-            case .fullAccess, .writeOnly: return .granted
-            case .denied, .restricted:    return .denied
-            case .notDetermined:          return .notDetermined
-            @unknown default:             return .unknown
-            }
-        } else {
-            switch status {
-            case .authorized:             return .granted
-            case .denied, .restricted:    return .denied
-            case .notDetermined:          return .notDetermined
-            @unknown default:             return .unknown
-            }
+        switch status.rawValue {
+        case 0:    return .notDetermined          // .notDetermined
+        case 1, 2: return .denied                 // .restricted, .denied
+        case 3, 4: return .granted                // .authorized / .fullAccess, .writeOnly
+        default:   return .unknown
         }
     }
 }

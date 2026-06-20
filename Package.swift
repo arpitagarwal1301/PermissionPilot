@@ -12,6 +12,7 @@ import PackageDescription
 // Hard constraint: zero third-party dependencies — Apple frameworks only.
 let package = Package(
     name: "PermissionPilot",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v12)
     ],
@@ -26,17 +27,20 @@ let package = Package(
     targets: [
         // Engine — no UI.
         .target(
-            name: "PermissionPilotCore"
+            name: "PermissionPilotCore",
+            resources: [.process("Resources")]
         ),
         // Components — status rows + checklist.
         .target(
             name: "PermissionPilotUI",
-            dependencies: ["PermissionPilotCore"]
+            dependencies: ["PermissionPilotCore"],
+            resources: [.process("Resources")]
         ),
         // Flow — full onboarding wizard.
         .target(
             name: "PermissionPilot",
-            dependencies: ["PermissionPilotCore", "PermissionPilotUI"]
+            dependencies: ["PermissionPilotCore", "PermissionPilotUI"],
+            resources: [.process("Resources")]
         ),
         // Example macOS app demonstrating the full wizard.
         .executableTarget(

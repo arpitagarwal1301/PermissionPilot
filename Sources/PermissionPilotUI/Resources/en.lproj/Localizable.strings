@@ -1,0 +1,54 @@
+/* PermissionPilotUI — base (English) localizations. */
+
+/* MARK: Shared states & actions */
+"state.granted" = "Granted";
+"state.notEnabled" = "Not enabled";
+"state.unavailable" = "Status unavailable";
+"state.comingSoon" = "Coming soon";
+"action.enable" = "Enable";
+"action.enable.named" = "Enable %@";
+"action.openSettings" = "Open System Settings";
+"action.revealInFinder" = "Reveal in Finder";
+"action.allowAccess" = "Allow Access…";
+
+/* MARK: Help & accessibility */
+"help.docs" = "Apple documentation for %@";
+"help.comingSoonSuffix" = "%@ (coming soon)";
+"a11y.learnMore" = "Learn more about %@ (Apple documentation)";
+"a11y.activateHint" = "Activates to enable in System Settings";
+
+/* MARK: Checklist / board */
+"checklist.title" = "Permissions needed";
+"permissions.title" = "Permissions";
+"permissions.counter" = "%1$lld of %2$lld enabled";
+"permissions.counter.comingSoon" = " · %lld coming soon";
+"permissions.view.picker" = "View";
+"permissions.view.list" = "List view";
+"permissions.view.grid" = "Grid view";
+
+/* MARK: Relaunch */
+"relaunch.button" = "Quit & Reopen";
+"relaunch.message" = "%@ will take effect after you quit & reopen.";
+"relaunch.message.generic" = "Some changes take effect after you quit and reopen.";
+
+/* MARK: Step indicator */
+"step.indicator" = "Step %1$lld of %2$lld";
+
+/* MARK: Just-in-time button */
+"jit.a11y.granted" = "%@ granted";
+
+/* MARK: Drag-to-authorize helper */
+"drag.title" = "Give %1$@ %2$@";
+"drag.subtitle.manualAdd" = "macOS can’t ask for this one — add %@ to the list yourself.";
+"drag.subtitle.prompt" = "macOS will ask once — just click Allow.";
+"drag.subtitle.deepLink" = "macOS doesn’t prompt for this — open Settings and switch %@ on.";
+"drag.footer.manualAdd" = "Already in the list? Just switch it on.";
+"drag.footer.prompt" = "%1$@ appears in the %2$@ list only after you respond.";
+"drag.footer.deepLink" = "%1$@ appears in the %2$@ list once it first uses this.";
+"drag.step.openList" = "Open the %@ list:";
+"drag.step.drag" = "Drag %@ in — or click + there and pick it:";
+"drag.zone.label" = "↗ Drag me into the list";
+"drag.zone.help" = "Drag into the %@ list in System Settings";
+"drag.zone.a11y" = "%@ icon. Drag it into the System Settings list.";
+"drag.alreadyDenied" = "Already denied?";
+"drag.deepLink.hint" = "Then switch %1$@ on in the %2$@ list.";

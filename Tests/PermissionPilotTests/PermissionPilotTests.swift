@@ -8,6 +8,7 @@ import Speech
 import CoreBluetooth
 import UserNotifications
 @testable import PermissionPilotCore
+@testable import PermissionPilot
 
 // NOTE: Live detection/request paths touch the real TCC database and require a
 // signed `.app` plus user interaction, so they're intentionally not unit-tested.
@@ -99,6 +100,31 @@ final class PermissionPilotTests: XCTestCase {
             XCTAssertFalse(info.title.isEmpty, "empty title for \(permission)")
             XCTAssertFalse(info.reason.isEmpty, "empty reason for \(permission)")
             XCTAssertFalse(info.systemImage.isEmpty, "empty symbol for \(permission)")
+        }
+    }
+
+    func testWizardConfigUsesLocalizedDefaults() {
+        // Exercises the PermissionPilot module's Bundle.module via real defaults —
+        // a missing resource would surface the key (e.g. "onboarding.done.title").
+        let config = OnboardingConfiguration(appName: "Acme")
+        XCTAssertEqual(config.doneTitle, "You're all set")
+        XCTAssertEqual(config.resolvedWelcomeHeadline, "Welcome to Acme")
+        XCTAssertEqual(
+            config.resolvedDoneSubtitle,
+            "Acme has everything it needs. You can change these anytime in System Settings."
+        )
+    }
+
+    func testDefaultInfoIsLocalized() {
+        // Proves the .strings lookup resolves against the module bundle — a missing
+        // resource would return the key itself ("permission.camera.title").
+        XCTAssertEqual(Permission.camera.defaultInfo.title, "Camera")
+        XCTAssertEqual(Permission.accessibility.defaultInfo.title, "Accessibility")
+        XCTAssertEqual(Permission.fullDiskAccess.defaultInfo.reason,
+                       "Read files across your Mac that are normally protected.")
+        for p in Permission.allCases {
+            XCTAssertFalse(p.defaultInfo.title.hasPrefix("permission."),
+                           "\(p) title not localized (got the key back)")
         }
     }
 

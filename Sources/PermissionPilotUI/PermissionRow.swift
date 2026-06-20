@@ -53,11 +53,11 @@ public struct PermissionRow: View {
         }
         .frame(minHeight: PPDesign.rowHeight)
         .opacity(isComingSoon ? 0.55 : 1)
-        .help(isComingSoon ? "\(reason) (coming soon)" : reason)
+        .help(isComingSoon ? ppFormat("help.comingSoonSuffix", reason) : reason)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("\(info.title). \(reason)"))
         .accessibilityValue(Text(accessibilityStateText))
-        .accessibilityHint(actionable ? Text("Activates to enable in System Settings") : Text(""))
+        .accessibilityHint(actionable ? Text(ppLocalized("a11y.activateHint")) : Text(""))
         // Combining children flattens the trailing Button away, so restore the
         // button trait + activation on the row itself for VoiceOver / keyboard.
         .accessibilityAddTraits(actionable ? .isButton : [])
@@ -85,7 +85,7 @@ public struct PermissionRow: View {
     private var trailing: some View {
         if isComingSoon {
             HStack(spacing: PPDesign.s8) {
-                Text("Coming soon")
+                Text(ppLocalized("state.comingSoon"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, PPDesign.s8)
@@ -97,14 +97,14 @@ public struct PermissionRow: View {
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
-                    .help("Apple documentation for \(info.title)")
-                    .accessibilityLabel("Learn more about \(info.title) (Apple documentation)")
+                    .help(ppFormat("help.docs", info.title))
+                    .accessibilityLabel(ppFormat("a11y.learnMore", info.title))
                 }
             }
         } else if isGranted {
             HStack(spacing: PPDesign.s4 + 2) {
                 Image(systemName: "checkmark.circle.fill")
-                Text("Granted").fontWeight(.semibold)
+                Text(ppLocalized("state.granted")).fontWeight(.semibold)
             }
             .font(.subheadline)
             .foregroundStyle(PPColor.granted)
@@ -113,7 +113,7 @@ public struct PermissionRow: View {
             // prompted — guide the user to add the app via drag-to-authorize.
             // Always open the helper popover — it adapts: drag-to-authorize for
             // manual-add panes, or a "request access" guide for Camera/Mic.
-            Button("Enable") { showsDragHelp = true }
+            Button(ppLocalized("action.enable")) { showsDragHelp = true }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
                 .applyingPermissionPilotTint(tint)
@@ -124,11 +124,11 @@ public struct PermissionRow: View {
     }
 
     private var accessibilityStateText: String {
-        if isComingSoon { return "Coming soon" }
+        if isComingSoon { return ppLocalized("state.comingSoon") }
         switch status {
-        case .granted:                  return "Granted"
-        case .denied, .notDetermined:   return "Not enabled"
-        case .unknown:                  return "Status unavailable"
+        case .granted:                  return ppLocalized("state.granted")
+        case .denied, .notDetermined:   return ppLocalized("state.notEnabled")
+        case .unknown:                  return ppLocalized("state.unavailable")
         }
     }
 }

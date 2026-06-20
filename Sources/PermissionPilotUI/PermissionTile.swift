@@ -58,7 +58,7 @@ public struct PermissionTile: View {
         )
         .overlay(alignment: .topTrailing) { badge.padding(PPDesign.s8) }
         .opacity(isComingSoon ? 0.55 : 1)
-        .help(isComingSoon ? "\(reason) (coming soon)" : reason)
+        .help(isComingSoon ? ppFormat("help.comingSoonSuffix", reason) : reason)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(info.title))
         .accessibilityValue(Text(stateText))
@@ -76,8 +76,8 @@ public struct PermissionTile: View {
                     badgeCircle(fill: Color.primary.opacity(0.12), symbol: "info", foreground: .secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Apple documentation for \(info.title)")
-                .accessibilityLabel("Learn more about \(info.title) (Apple documentation)")
+                .help(ppFormat("help.docs", info.title))
+                .accessibilityLabel(ppFormat("a11y.learnMore", info.title))
             } else {
                 badgeCircle(fill: Color.primary.opacity(0.12), symbol: "clock", foreground: .secondary)
             }
@@ -89,7 +89,7 @@ public struct PermissionTile: View {
                             foreground: Color(nsColor: .windowBackgroundColor))
             }
             .buttonStyle(.plain)
-            .help("Enable \(info.title)")
+            .help(ppFormat("action.enable.named", info.title))
             .popover(isPresented: $showsDragHelp, arrowEdge: .bottom) {
                 DragToAuthorizeView(manager: manager, permission: permission)
             }
@@ -113,8 +113,8 @@ public struct PermissionTile: View {
     }
 
     private var stateText: String {
-        if isComingSoon { return "Coming soon" }
-        if isGranted { return "Granted" }
-        return "Not enabled"
+        if isComingSoon { return ppLocalized("state.comingSoon") }
+        if isGranted { return ppLocalized("state.granted") }
+        return ppLocalized("state.notEnabled")
     }
 }

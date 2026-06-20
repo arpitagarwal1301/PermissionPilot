@@ -27,14 +27,14 @@ public struct PermissionChecklist: View {
     public init(
         manager: PermissionManager,
         permissions: [Permission]? = nil,
-        title: String = "Permissions needed",
+        title: String? = nil,
         reasonOverrides: [Permission: String] = [:],
         showsCard: Bool = true,
         showsHeader: Bool = true
     ) {
         self.manager = manager
         self.permissions = permissions ?? manager.allPermissions
-        self.title = title
+        self.title = title ?? ppLocalized("checklist.title")
         self.reasonOverrides = reasonOverrides
         self.showsCard = showsCard
         self.showsHeader = showsHeader
@@ -60,7 +60,7 @@ public struct PermissionChecklist: View {
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
-            Text("\(grantedCount) of \(implementedCount) enabled")
+            Text(ppFormat("permissions.counter", grantedCount, implementedCount))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

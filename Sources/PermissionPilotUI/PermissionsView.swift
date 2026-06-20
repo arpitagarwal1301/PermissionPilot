@@ -36,7 +36,7 @@ public struct PermissionsView: View {
     public init(
         manager: PermissionManager,
         permissions: [Permission]? = nil,
-        title: String = "Permissions",
+        title: String? = nil,
         reasonOverrides: [Permission: String] = [:],
         defaultLayout: Layout = .list,
         showsCard: Bool = true,
@@ -44,7 +44,7 @@ public struct PermissionsView: View {
     ) {
         self.manager = manager
         self.permissions = permissions ?? manager.allPermissions
-        self.title = title
+        self.title = title ?? ppLocalized("permissions.title")
         self.reasonOverrides = reasonOverrides
         self.showsCard = showsCard
         self.showsRelaunchHint = showsRelaunchHint
@@ -97,11 +97,11 @@ public struct PermissionsView: View {
 
             Spacer(minLength: PPDesign.s12)
 
-            Picker("View", selection: $layout) {
+            Picker(ppLocalized("permissions.view.picker"), selection: $layout) {
                 Image(systemName: "list.bullet").tag(Layout.list)
-                    .accessibilityLabel("List view")
+                    .accessibilityLabel(ppLocalized("permissions.view.list"))
                 Image(systemName: "square.grid.2x2").tag(Layout.grid)
-                    .accessibilityLabel("Grid view")
+                    .accessibilityLabel(ppLocalized("permissions.view.grid"))
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -111,8 +111,8 @@ public struct PermissionsView: View {
     }
 
     private var counterText: String {
-        var text = "\(grantedCount) of \(implementedCount) enabled"
-        if comingSoonCount > 0 { text += " · \(comingSoonCount) coming soon" }
+        var text = ppFormat("permissions.counter", grantedCount, implementedCount)
+        if comingSoonCount > 0 { text += ppFormat("permissions.counter.comingSoon", comingSoonCount) }
         return text
     }
 
@@ -157,7 +157,7 @@ public struct PermissionsView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: PPDesign.s12)
-            Button("Quit & Reopen") { manager.quitAndReopen() }
+            Button(ppLocalized("relaunch.button")) { manager.quitAndReopen() }
                 .controlSize(.small)
         }
         .padding(.horizontal, PPDesign.s12)
@@ -172,11 +172,12 @@ public struct PermissionsView: View {
     private var relaunchMessage: String {
         let titles = manager.relaunchPendingTitles
         guard !titles.isEmpty else {
-            return "Some changes take effect after you quit and reopen."
+            return ppLocalized("relaunch.message.generic")
         }
+        // Count-neutral "will take effect" avoids singular/plural verb agreement,
+        // so no per-language plural rules are needed.
         let names = ListFormatter.localizedString(byJoining: titles)
-        let verb = titles.count == 1 ? "takes" : "take"
-        return "\(names) \(verb) effect after you quit & reopen."
+        return ppFormat("relaunch.message", names)
     }
 }
 

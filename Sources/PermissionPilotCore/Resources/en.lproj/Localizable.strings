@@ -1,0 +1,39 @@
+/* PermissionPilotCore — base (English) localizations.
+   Permission display titles and one-line default reasons. Hosts may override
+   these per-permission via PermissionManager's infoOverrides / the wizard config. */
+
+/* MARK: Titles */
+"permission.accessibility.title" = "Accessibility";
+"permission.screenRecording.title" = "Screen Recording";
+"permission.inputMonitoring.title" = "Input Monitoring";
+"permission.fullDiskAccess.title" = "Full Disk Access";
+"permission.camera.title" = "Camera";
+"permission.microphone.title" = "Microphone";
+"permission.bluetooth.title" = "Bluetooth";
+"permission.location.title" = "Location";
+"permission.calendars.title" = "Calendars";
+"permission.contacts.title" = "Contacts";
+"permission.reminders.title" = "Reminders";
+"permission.photos.title" = "Photos";
+"permission.notifications.title" = "Notifications";
+"permission.speechRecognition.title" = "Speech Recognition";
+"permission.automation.title" = "Automation";
+"permission.localNetwork.title" = "Local Network";
+
+/* MARK: Default reasons */
+"permission.accessibility.reason" = "Control your Mac to automate actions and read on-screen content.";
+"permission.screenRecording.reason" = "Capture your screen to share, record, or analyze what’s on it.";
+"permission.inputMonitoring.reason" = "Detect keyboard and pointer input for shortcuts and automation.";
+"permission.fullDiskAccess.reason" = "Read files across your Mac that are normally protected.";
+"permission.camera.reason" = "Use your camera for video features.";
+"permission.microphone.reason" = "Use your microphone for audio features.";
+"permission.bluetooth.reason" = "Discover and connect to nearby Bluetooth devices.";
+"permission.location.reason" = "Access your location.";
+"permission.calendars.reason" = "Read and write your calendar events.";
+"permission.contacts.reason" = "Access your contacts.";
+"permission.reminders.reason" = "Read and write your reminders.";
+"permission.photos.reason" = "Access your photo library.";
+"permission.notifications.reason" = "Send you notifications.";
+"permission.speechRecognition.reason" = "Transcribe your speech.";
+"permission.automation.reason" = "Control other apps via Apple Events.";
+"permission.localNetwork.reason" = "Find and connect to devices on your local network.";
