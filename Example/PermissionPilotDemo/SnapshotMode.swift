@@ -53,15 +53,19 @@ enum SnapshotMode {
                 render(root, size: NSSize(width: 700, height: 540),
                        appearance: appearanceName, to: "\(outDir)/\(stepName)_\(schemeName).png")
             }
-            // Drag-to-authorize helper (Full Disk Access). Use the built .app's
-            // icon if present (the unbundled snapshot binary would show a folder).
+            // Help popovers. Use the built .app's icon if present (the unbundled
+            // snapshot binary would otherwise show a folder).
             let appCandidate = Bundle.main.bundleURL.deletingLastPathComponent()
                 .appendingPathComponent("PermissionPilot Demo.app")
             let iconURL = FileManager.default.fileExists(atPath: appCandidate.path) ? appCandidate : Bundle.main.bundleURL
-            let drag = DragToAuthorizeView(manager: manager, permission: .fullDiskAccess, appURL: iconURL, appName: "YourApp")
+            let dragFDA = DragToAuthorizeView(manager: manager, permission: .fullDiskAccess, appURL: iconURL, appName: "YourApp")
                 .environment(\.colorScheme, scheme)
-            render(drag, size: NSSize(width: 420, height: 440),
-                   appearance: appearanceName, to: "\(outDir)/4-drag-to-authorize_\(schemeName).png")
+            render(dragFDA, size: NSSize(width: 460, height: 470),
+                   appearance: appearanceName, to: "\(outDir)/4-help-manualadd_\(schemeName).png")
+            let dragCam = DragToAuthorizeView(manager: manager, permission: .camera, appURL: iconURL, appName: "YourApp")
+                .environment(\.colorScheme, scheme)
+            render(dragCam, size: NSSize(width: 460, height: 320),
+                   appearance: appearanceName, to: "\(outDir)/4-help-camera_\(schemeName).png")
         }
         // Hero flow banner composed from the real app screens (dark only).
         NSApp.appearance = NSAppearance(named: .darkAqua)

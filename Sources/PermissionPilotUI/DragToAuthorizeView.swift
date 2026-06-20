@@ -20,6 +20,8 @@ public struct DragToAuthorizeView: View {
 
     @Environment(\.permissionPilotTint) private var tint
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pulse = false
 
     /// - Parameters:
     ///   - manager: The permission engine (used for the Settings deep-link + title).
@@ -71,14 +73,14 @@ public struct DragToAuthorizeView: View {
 
     private var subtitle: String {
         permission.supportsManualAdd
-            ? "macOS can’t ask for this one — you add \(appName) to the list yourself."
-            : "macOS shows a one-time prompt. \(appName) appears in the \(permissionTitle) list only after it responds."
+            ? "macOS can’t ask for this one — add \(appName) to the list yourself."
+            : "macOS will ask once — just click Allow."
     }
 
     private var footerNote: String {
         permission.supportsManualAdd
             ? "Already in the list? Just switch it on."
-            : "Denied it earlier? Re-enable \(appName) in System Settings → Privacy & Security → \(permissionTitle)."
+            : "\(appName) appears in the \(permissionTitle) list only after you respond."
     }
 
     // MARK: Step groups
@@ -90,9 +92,9 @@ public struct DragToAuthorizeView: View {
                 .buttonStyle(.borderedProminent)
                 .applyingPermissionPilotTint(tint)
         }
-        stepRow(2, "If \(appName) isn’t listed, add it — drag its icon in, or click + there and pick it:") {
-            HStack(spacing: PPDesign.s16) {
-                draggableIcon
+        stepRow(2, "Drag \(appName) in — or click + there and pick it:") {
+            HStack(alignment: .center, spacing: PPDesign.s16) {
+                dragZone
                 Button("Reveal in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting([appURL])
                 }
@@ -102,13 +104,20 @@ public struct DragToAuthorizeView: View {
 
     @ViewBuilder
     private var promptSteps: some View {
-        stepRow(1, "Request access — macOS will ask:") {
+        VStack(alignment: .leading, spacing: PPDesign.s8) {
             Button("Allow Access…") { manager.request(permission) }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .frame(maxWidth: .infinity)
                 .applyingPermissionPilotTint(tint)
-        }
-        stepRow(2, "Or manage it in Settings:") {
-            Button("Open System Settings") { manager.openSettings(for: permission) }
+            HStack(spacing: 4) {
+                Text("Already denied?")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button("Open System Settings") { manager.openSettings(for: permission) }
+                    .buttonStyle(.link)
+                    .font(.footnote)
+            }
         }
     }
 
@@ -140,21 +149,39 @@ public struct DragToAuthorizeView: View {
             .background(Circle().fill(Color.primary.opacity(0.08)))
     }
 
-    private var draggableIcon: some View {
-        VStack(spacing: PPDesign.s4) {
+    /// A prominent, obviously-draggable drop-zone: the app icon in a dashed box
+    /// with a "Drag me" cue, a grab cursor, and a gentle pulse (reduce-motion safe).
+    private var dragZone: some View {
+        let accent = tint ?? .accentColor
+        return VStack(spacing: PPDesign.s8) {
             Image(nsImage: NSWorkspace.shared.icon(forFile: appURL.path))
                 .resizable()
-                .frame(width: 48, height: 48)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 11, style: .continuous)
-                        .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [4]))
-                        .foregroundStyle(.secondary)
-                        .opacity(0.55)
-                )
+                .frame(width: 58, height: 58)
                 .onDrag { NSItemProvider(contentsOf: appURL) ?? NSItemProvider() }
-            Text("drag \(appName)")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.secondary)
+            Text("↗ Drag me into the list")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(accent)
+        }
+        .padding(.horizontal, PPDesign.s16)
+        .padding(.vertical, PPDesign.s12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(accent.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(accent, style: StrokeStyle(lineWidth: 1.5, dash: [5]))
+                .opacity(pulse ? 0.95 : 0.5)
+        )
+        .shadow(color: accent.opacity(pulse ? 0.28 : 0), radius: pulse ? 7 : 0)
+        .onHover { inside in
+            if inside { NSCursor.openHand.push() } else { NSCursor.pop() }
+        }
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
         }
         .help("Drag into the \(permissionTitle) list in System Settings")
         .accessibilityElement(children: .ignore)
