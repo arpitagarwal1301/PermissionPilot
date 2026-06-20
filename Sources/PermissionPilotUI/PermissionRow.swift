@@ -111,22 +111,15 @@ public struct PermissionRow: View {
         } else {
             // Permissions with no request API (Full Disk Access) can't be
             // prompted — guide the user to add the app via drag-to-authorize.
-            // Manual-add panes (Accessibility / Screen Recording / Input
-            // Monitoring / Full Disk Access) show the drag-to-authorize helper —
-            // the app may not be listed yet. Camera/Mic use the system prompt.
-            Button("Enable") {
-                if permission.supportsManualAdd {
-                    showsDragHelp = true
-                } else {
-                    manager.request(permission)
+            // Always open the helper popover — it adapts: drag-to-authorize for
+            // manual-add panes, or a "request access" guide for Camera/Mic.
+            Button("Enable") { showsDragHelp = true }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .applyingPermissionPilotTint(tint)
+                .popover(isPresented: $showsDragHelp, arrowEdge: .bottom) {
+                    DragToAuthorizeView(manager: manager, permission: permission)
                 }
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.regular)
-            .applyingPermissionPilotTint(tint)
-            .popover(isPresented: $showsDragHelp, arrowEdge: .bottom) {
-                DragToAuthorizeView(manager: manager, permission: permission)
-            }
         }
     }
 

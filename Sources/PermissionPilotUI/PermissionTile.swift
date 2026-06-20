@@ -108,11 +108,8 @@ public struct PermissionTile: View {
     }
 
     private func enable() {
-        if permission.supportsManualAdd {
-            showsDragHelp = true
-        } else {
-            manager.request(permission)
-        }
+        // Always open the helper popover — it adapts per permission type.
+        showsDragHelp = true
     }
 
     private var stateText: String {

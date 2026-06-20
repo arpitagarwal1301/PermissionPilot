@@ -2,13 +2,16 @@ import SwiftUI
 import AppKit
 import PermissionPilotCore
 
-/// A guided helper for permissions that have **no programmatic request API** —
-/// most notably Full Disk Access, where the user must add the app to the
-/// System Settings list themselves.
+/// A guided "how to grant this" helper, shown from a permission's **Enable**.
 ///
-/// It spells out the two steps, offers both ways to add the app (drag its icon
-/// in, or use the **+** button), and covers the "already listed" case. Built
-/// entirely on AppKit/SwiftUI drag APIs — no third-party code.
+/// It adapts to the permission:
+/// - **Manual-add panes** (Accessibility, Screen Recording, Input Monitoring,
+///   Full Disk Access): drag the app icon into the list, or use **+** — the app
+///   may not be listed yet.
+/// - **Prompt-based** (Camera, Microphone): request access via the system prompt;
+///   the app only appears in that list after it responds.
+///
+/// Built entirely on AppKit/SwiftUI APIs — no third-party code.
 public struct DragToAuthorizeView: View {
     @ObservedObject private var manager: PermissionManager
     private let permission: Permission
@@ -43,35 +46,70 @@ public struct DragToAuthorizeView: View {
                 Text("Give \(appName) \(permissionTitle)")
                     .font(.headline)
                     .foregroundStyle(.primary)
-                Text("macOS can’t ask for this one — you add \(appName) to the list yourself.")
+                Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            stepRow(1, "Open the \(permissionTitle) list:") {
-                Button("Open System Settings") { manager.request(permission) }
-                    .buttonStyle(.borderedProminent)
-                    .applyingPermissionPilotTint(tint)
-            }
-
-            stepRow(2, "If \(appName) isn’t listed, add it — drag its icon in, or click + there and pick it:") {
-                HStack(spacing: PPDesign.s16) {
-                    draggableIcon
-                    Button("Reveal in Finder") {
-                        NSWorkspace.shared.activateFileViewerSelecting([appURL])
-                    }
-                }
+            if permission.supportsManualAdd {
+                manualAddSteps
+            } else {
+                promptSteps
             }
 
             Divider()
 
-            Label("Already in the list? Just switch it on.", systemImage: "info.circle")
+            Label(footerNote, systemImage: "info.circle")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(PPDesign.s20)
         .frame(width: 420)
+    }
+
+    private var subtitle: String {
+        permission.supportsManualAdd
+            ? "macOS can’t ask for this one — you add \(appName) to the list yourself."
+            : "macOS shows a one-time prompt. \(appName) appears in the \(permissionTitle) list only after it responds."
+    }
+
+    private var footerNote: String {
+        permission.supportsManualAdd
+            ? "Already in the list? Just switch it on."
+            : "Denied it earlier? Re-enable \(appName) in System Settings → Privacy & Security → \(permissionTitle)."
+    }
+
+    // MARK: Step groups
+
+    @ViewBuilder
+    private var manualAddSteps: some View {
+        stepRow(1, "Open the \(permissionTitle) list:") {
+            Button("Open System Settings") { manager.request(permission) }
+                .buttonStyle(.borderedProminent)
+                .applyingPermissionPilotTint(tint)
+        }
+        stepRow(2, "If \(appName) isn’t listed, add it — drag its icon in, or click + there and pick it:") {
+            HStack(spacing: PPDesign.s16) {
+                draggableIcon
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([appURL])
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var promptSteps: some View {
+        stepRow(1, "Request access — macOS will ask:") {
+            Button("Allow Access…") { manager.request(permission) }
+                .buttonStyle(.borderedProminent)
+                .applyingPermissionPilotTint(tint)
+        }
+        stepRow(2, "Or manage it in Settings:") {
+            Button("Open System Settings") { manager.openSettings(for: permission) }
+        }
     }
 
     // MARK: Pieces

@@ -19,13 +19,15 @@ enum Relauncher {
 
     @MainActor
     private static func relaunchBundle(at url: URL) {
-        let configuration = NSWorkspace.OpenConfiguration()
-        configuration.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in
-            DispatchQueue.main.async {
-                NSApp.terminate(nil)
-            }
-        }
+        // Spawn a detached helper that waits for this instance to fully quit, then
+        // reopens the app. We can't use NSWorkspace's `createsNewApplicationInstance`
+        // because apps marked `LSMultipleInstancesProhibited` refuse a second
+        // instance — it would terminate without ever relaunching.
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "sleep 1; /usr/bin/open \"\(url.path)\""]
+        try? process.run()
+        NSApp.terminate(nil)
     }
 
     @MainActor

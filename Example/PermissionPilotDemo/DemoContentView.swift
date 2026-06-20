@@ -21,7 +21,9 @@ struct DemoContentView: View {
             }
 
             // Full board: implemented permissions + the "coming soon" roadmap.
+            // maxHeight lets PermissionsView scroll its rows/tiles internally.
             PermissionsView(manager: manager, permissions: Permission.allCases)
+                .frame(maxHeight: .infinity)
 
             HStack(spacing: PPDesign.s12) {
                 Button("Re-run Onboarding", action: onReopenOnboarding)

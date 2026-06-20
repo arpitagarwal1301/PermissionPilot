@@ -56,15 +56,26 @@ public struct PermissionsView: View {
     private var comingSoonCount: Int { permissions.count - implementedCount }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: PPDesign.s16) {
+        let pad = showsCard ? PPDesign.cardPadding : 0
+        // Header (and relaunch hint) stay pinned; only the list/grid scrolls.
+        return VStack(alignment: .leading, spacing: 0) {
             header
-            content
-                .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: layout)
+                .padding(.horizontal, pad)
+                .padding(.top, pad)
+                .padding(.bottom, PPDesign.s12)
+            ScrollView {
+                content
+                    .padding(.horizontal, pad)
+                    .padding(.bottom, PPDesign.s12)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: layout)
+            }
             if showsRelaunchHint && manager.relaunchSuggested {
                 relaunchBanner
+                    .padding(.horizontal, pad)
+                    .padding(.top, PPDesign.s8)
+                    .padding(.bottom, pad)
             }
         }
-        .padding(showsCard ? PPDesign.cardPadding : 0)
         .frame(maxWidth: PPDesign.cardWidth)
         .modifier(PermissionsCard(enabled: showsCard))
     }
@@ -97,7 +108,6 @@ public struct PermissionsView: View {
             .fixedSize()
             .tint(tint ?? .accentColor)
         }
-        .padding(.top, PPDesign.s8)
     }
 
     private var counterText: String {

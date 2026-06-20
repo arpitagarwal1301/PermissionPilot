@@ -96,28 +96,28 @@ public struct OnboardingView: View {
     }
 
     private var permissionsStep: some View {
-        ScrollView {
-            VStack(spacing: PPDesign.s16) {
-                PermissionsView(
-                    manager: manager,
-                    title: "Permissions needed",
-                    reasonOverrides: configuration.reasons
+        // No outer ScrollView — PermissionsView scrolls its rows/tiles internally
+        // with a pinned header; the prewarning note stays below it.
+        VStack(spacing: PPDesign.s12) {
+            PermissionsView(
+                manager: manager,
+                title: "Permissions needed",
+                reasonOverrides: configuration.reasons
+            )
+            .frame(maxHeight: .infinity)
+            if showsScreenRecordingPrewarning {
+                Label(
+                    "macOS may ask you to re-confirm Screen Recording periodically — that's expected.",
+                    systemImage: "info.circle"
                 )
-                if showsScreenRecordingPrewarning {
-                    Label(
-                        "macOS may ask you to re-confirm Screen Recording periodically — that's expected.",
-                        systemImage: "info.circle"
-                    )
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: PPDesign.cardWidth, alignment: .leading)
-                }
-                // The "Quit & Reopen" hint is shown by PermissionsView itself.
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: PPDesign.cardWidth, alignment: .leading)
             }
-            .padding(.horizontal, PPDesign.s24)
-            .padding(.vertical, PPDesign.s12)
-            .frame(maxWidth: .infinity)
         }
+        .padding(.horizontal, PPDesign.s24)
+        .padding(.vertical, PPDesign.s12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         // onChange fires only on transitions; also check on entry so re-runs with
         // grants already in place auto-advance instead of stalling on the checklist.
         .onAppear {
