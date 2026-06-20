@@ -65,9 +65,14 @@ public final class PermissionManager: ObservableObject {
 
     deinit {
         if let observer = activationObserver {
-            NotificationCenter.default.removeObserver(observer)
+            NotificationCenter.default.removeObserver(observer) // safe off-thread
         }
-        pollTimer?.invalidate()
+        // `Timer.invalidate()` only takes effect on the run loop the timer was
+        // scheduled on (main). A `@MainActor` deinit can run off-main, so capture
+        // a local and hop to main — unconditionally safe from deinit.
+        if let timer = pollTimer {
+            DispatchQueue.main.async { timer.invalidate() }
+        }
     }
 
     // MARK: Querying

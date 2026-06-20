@@ -8,9 +8,11 @@ import IOKit.hid
 /// Low-level detection + request implementations, one per permission, built on
 /// Apple framework APIs. Stateless; ``PermissionManager`` owns the published state.
 ///
-/// Detection is always queried *fresh* (never cached) so a stale snapshot — most
-/// notably the historical `CGPreflightScreenCaptureAccess` launch-time value —
-/// cannot mask a change the user just made in System Settings.
+/// Most checks re-query the OS on every call. The exception is Screen Recording:
+/// `CGPreflightScreenCaptureAccess()` can return a value cached for the process
+/// lifetime, so a grant made *mid-session* may not read true until the app
+/// relaunches. `.screenRecording` is therefore marked `mayRequireRelaunch` and
+/// the flow surfaces a "Quit & Reopen" affordance on the OS versions that need it.
 enum PermissionProbe {
 
     // MARK: Detect
@@ -33,7 +35,8 @@ enum PermissionProbe {
     }
 
     static func screenRecordingStatus() -> PermissionStatus {
-        // Queried fresh every call; see the stale-preflight note above.
+        // CGPreflight may be process-cached; a mid-session grant can require a
+        // relaunch before it reads true (see the type doc + mayRequireRelaunch).
         CGPreflightScreenCaptureAccess() ? .granted : .denied
     }
 
@@ -102,10 +105,10 @@ enum PermissionProbe {
             completion(granted ? .granted : inputMonitoringStatus())
 
         case .camera:
-            requestMedia(.video, completion: completion)
+            requestMedia(.camera, .video, completion: completion)
 
         case .microphone:
-            requestMedia(.audio, completion: completion)
+            requestMedia(.microphone, .audio, completion: completion)
 
         case .fullDiskAccess:
             SystemSettingsLink.open(.fullDiskAccess)
@@ -114,9 +117,20 @@ enum PermissionProbe {
     }
 
     private static func requestMedia(
+        _ permission: Permission,
         _ mediaType: AVMediaType,
         completion: @escaping (PermissionStatus) -> Void
     ) {
+        // Requesting Camera/Microphone without the required usage-description key
+        // terminates the host process. Fail gracefully instead of crashing the app.
+        if let key = permission.requiredInfoPlistKey,
+           Bundle.main.object(forInfoDictionaryKey: key) == nil {
+            assertionFailure(
+                "PermissionPilot: missing \(key) in Info.plist — \(permission.rawValue) cannot be requested without it."
+            )
+            completion(.notDetermined)
+            return
+        }
         AVCaptureDevice.requestAccess(for: mediaType) { granted in
             DispatchQueue.main.async {
                 completion(granted ? .granted : .denied)

@@ -7,6 +7,7 @@ public struct StepIndicator: View {
     private let current: Int
 
     @Environment(\.permissionPilotTint) private var tint
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
     /// - Parameters:
     ///   - current: Zero-based index of the active step.
@@ -22,6 +23,15 @@ public struct StepIndicator: View {
                 Circle()
                     .fill(index == current ? (tint ?? Color.accentColor) : Color(nsColor: .quaternaryLabelColor))
                     .frame(width: PPDesign.stepDotSize, height: PPDesign.stepDotSize)
+                    .overlay {
+                        // Non-color cue for the active step when the user has
+                        // "Differentiate Without Color" on (keeps the default look otherwise).
+                        if differentiateWithoutColor && index == current {
+                            Circle()
+                                .strokeBorder(Color.primary, lineWidth: 1.5)
+                                .padding(-2)
+                        }
+                    }
             }
         }
         .accessibilityElement()

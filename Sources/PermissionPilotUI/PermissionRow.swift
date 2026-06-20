@@ -52,6 +52,10 @@ public struct PermissionRow: View {
         .accessibilityLabel(Text("\(info.title). \(reason)"))
         .accessibilityValue(Text(accessibilityStateText))
         .accessibilityHint(isGranted ? Text("") : Text("Activates to enable in System Settings"))
+        // Combining children flattens the trailing Button away, so restore the
+        // button trait + activation on the row itself for VoiceOver / keyboard.
+        .accessibilityAddTraits(isGranted ? [] : .isButton)
+        .accessibilityAction { if !isGranted { manager.request(permission) } }
     }
 
     // MARK: Pieces

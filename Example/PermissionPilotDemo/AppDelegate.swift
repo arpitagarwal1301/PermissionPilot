@@ -53,6 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let hosting = NSHostingController(rootView: content)
         let window = NSWindow(contentViewController: hosting)
+        window.isReleasedWhenClosed = false
         window.title = "PermissionPilot Demo"
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.setContentSize(NSSize(width: 680, height: 540))

@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import PermissionPilotCore
 import PermissionPilotUI
 
@@ -36,9 +37,12 @@ public struct OnboardingView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            StepIndicator(current: step.index, total: Step.allCases.count)
-                .padding(.top, PPDesign.s16)
-                .padding(.bottom, PPDesign.s8)
+            // The approved screens show step dots only on the permissions step.
+            if step == .permissions {
+                StepIndicator(current: step.index, total: Step.allCases.count)
+                    .padding(.top, PPDesign.s16)
+                    .padding(.bottom, PPDesign.s8)
+            }
 
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -73,8 +77,9 @@ public struct OnboardingView: View {
             appIconSlot
             VStack(spacing: PPDesign.s12) {
                 Text(configuration.resolvedWelcomeHeadline)
-                    .font(.title).fontWeight(.bold)
+                    .font(.title).fontWeight(.semibold)
                     .multilineTextAlignment(.center)
+                    .accessibilityAddTraits(.isHeader)
                 Text(configuration.resolvedWelcomeSubtitle)
                     .font(.callout).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -112,6 +117,12 @@ public struct OnboardingView: View {
             .padding(.vertical, PPDesign.s12)
             .frame(maxWidth: .infinity)
         }
+        // onChange fires only on transitions; also check on entry so re-runs with
+        // grants already in place auto-advance instead of stalling on the checklist.
+        .onAppear {
+            manager.refresh()
+            autoAdvanceIfReady(manager.allRequiredGranted)
+        }
     }
 
     private var doneStep: some View {
@@ -119,7 +130,8 @@ public struct OnboardingView: View {
             successCheck
             VStack(spacing: PPDesign.s12) {
                 Text(configuration.doneTitle)
-                    .font(.title).fontWeight(.bold)
+                    .font(.title).fontWeight(.semibold)
+                    .accessibilityAddTraits(.isHeader)
                 Text(configuration.resolvedDoneSubtitle)
                     .font(.callout).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -190,6 +202,10 @@ public struct OnboardingView: View {
         )
     }
 
+    // The spec's "Skip for optional steps" is satisfied here without a Skip
+    // button: optional permissions live inline in the single checklist, and
+    // Continue is gated solely on `allRequiredGranted` — never on optional grants,
+    // so finishing is never blocked on an optional permission.
     private var bottomBar: some View {
         HStack {
             Button("Back") { go(to: .welcome) }
@@ -226,11 +242,30 @@ public struct OnboardingView: View {
         guard granted, step == .permissions else { return }
         if reduceMotion {
             step = .done
+            announceDone()
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                if step == .permissions { go(to: .done) }
+                if step == .permissions {
+                    go(to: .done)
+                    announceDone()
+                }
             }
         }
+    }
+
+    /// VoiceOver announcement for the one transition that happens with no user
+    /// action — auto-advancing to the Done step. Uses AppKit's `NSAccessibility`
+    /// (the SwiftUI `AccessibilityNotification` API is macOS 14+).
+    private func announceDone() {
+        let element: Any = NSApp.keyWindow ?? NSApplication.shared
+        NSAccessibility.post(
+            element: element,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: "All set. \(configuration.doneTitle)",
+                .priority: NSAccessibilityPriorityLevel.high.rawValue,
+            ]
+        )
     }
 
     private func finish() {

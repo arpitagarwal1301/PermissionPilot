@@ -99,8 +99,14 @@ final class PermissionPilotTests: XCTestCase {
     }
 
     func testRelaunchHints() {
+        // Input Monitoring requires a relaunch on every macOS version.
         XCTAssertTrue(Permission.inputMonitoring.mayRequireRelaunch)
-        XCTAssertTrue(Permission.screenRecording.mayRequireRelaunch)
+        // Screen Recording only pre-Sequoia; macOS 15+ applies it without relaunch.
+        if #available(macOS 15, *) {
+            XCTAssertFalse(Permission.screenRecording.mayRequireRelaunch)
+        } else {
+            XCTAssertTrue(Permission.screenRecording.mayRequireRelaunch)
+        }
         XCTAssertFalse(Permission.camera.mayRequireRelaunch)
     }
 

@@ -97,8 +97,13 @@ extension Permission {
     /// app is quit and reopened (Input Monitoring; pre-Sequoia Screen Recording).
     public var mayRequireRelaunch: Bool {
         switch self {
-        case .inputMonitoring, .screenRecording: return true
-        default:                                 return false
+        case .inputMonitoring:
+            return true
+        case .screenRecording:
+            // Pre-Sequoia only — macOS 15+ applies the grant without a relaunch.
+            if #available(macOS 15, *) { return false } else { return true }
+        default:
+            return false
         }
     }
 

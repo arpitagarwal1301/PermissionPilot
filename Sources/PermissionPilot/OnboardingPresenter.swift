@@ -35,6 +35,9 @@ public final class OnboardingPresenter: NSObject, NSWindowDelegate {
         }
         let hosting = NSHostingController(rootView: root)
         let window = NSWindow(contentViewController: hosting)
+        // ARC owns `window` via the strong property; disable AppKit's
+        // close-time release to avoid a double-free when the wizard closes.
+        window.isReleasedWhenClosed = false
         window.title = configuration.appName
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
