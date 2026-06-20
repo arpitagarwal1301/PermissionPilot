@@ -157,6 +157,19 @@ public final class PermissionManager: ObservableObject {
         if updated != statuses {
             statuses = updated
         }
+        // Notifications have no synchronous status API — the sync loop above reads a
+        // cached value; kick an async refresh and republish only that key when it
+        // returns. The poll / didBecomeActive keep it current.
+        if allPermissions.contains(.notifications) {
+            NotificationAuthorizer.shared.refreshStatus { [weak self] status in
+                Task { @MainActor in
+                    guard let self, !self.isStatic else { return }
+                    if self.statuses[.notifications] != status {
+                        self.statuses[.notifications] = status
+                    }
+                }
+            }
+        }
     }
 
     /// Requests `permission` — shows a system prompt where the OS allows, else

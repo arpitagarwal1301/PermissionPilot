@@ -56,8 +56,10 @@ public struct DragToAuthorizeView: View {
 
             if permission.supportsManualAdd {
                 manualAddSteps
-            } else {
+            } else if permission.canPromptInApp {
                 promptSteps
+            } else {
+                deepLinkSteps
             }
 
             Divider()
@@ -72,15 +74,23 @@ public struct DragToAuthorizeView: View {
     }
 
     private var subtitle: String {
-        permission.supportsManualAdd
-            ? "macOS can’t ask for this one — add \(appName) to the list yourself."
-            : "macOS will ask once — just click Allow."
+        if permission.supportsManualAdd {
+            return "macOS can’t ask for this one — add \(appName) to the list yourself."
+        } else if permission.canPromptInApp {
+            return "macOS will ask once — just click Allow."
+        } else {
+            return "macOS doesn’t prompt for this — open Settings and switch \(appName) on."
+        }
     }
 
     private var footerNote: String {
-        permission.supportsManualAdd
-            ? "Already in the list? Just switch it on."
-            : "\(appName) appears in the \(permissionTitle) list only after you respond."
+        if permission.supportsManualAdd {
+            return "Already in the list? Just switch it on."
+        } else if permission.canPromptInApp {
+            return "\(appName) appears in the \(permissionTitle) list only after you respond."
+        } else {
+            return "\(appName) appears in the \(permissionTitle) list once it first uses this."
+        }
     }
 
     // MARK: Step groups
@@ -118,6 +128,23 @@ public struct DragToAuthorizeView: View {
                     .buttonStyle(.link)
                     .font(.footnote)
             }
+        }
+    }
+
+    /// Deep-link-only permissions (Automation, Local Network): macOS exposes no
+    /// in-app prompt, so we send the user straight to the exact Settings pane.
+    @ViewBuilder
+    private var deepLinkSteps: some View {
+        VStack(alignment: .leading, spacing: PPDesign.s8) {
+            Button("Open System Settings") { manager.openSettings(for: permission) }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .frame(maxWidth: .infinity)
+                .applyingPermissionPilotTint(tint)
+            Text("Then switch \(appName) on in the \(permissionTitle) list.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

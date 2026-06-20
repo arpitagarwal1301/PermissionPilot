@@ -1,7 +1,17 @@
 import XCTest
 import AVFoundation
+import CoreLocation
+import Contacts
+import EventKit
+import Photos
+import Speech
+import CoreBluetooth
+import UserNotifications
 @testable import PermissionPilotCore
 
+// NOTE: Live detection/request paths touch the real TCC database and require a
+// signed `.app` plus user interaction, so they're intentionally not unit-tested.
+// Coverage here is the pure mapping/decision layer (the highest-value surface).
 final class PermissionPilotTests: XCTestCase {
 
     // MARK: Deep-link URL building
@@ -40,10 +50,10 @@ final class PermissionPilotTests: XCTestCase {
     // MARK: Status mapping
 
     func testAVAuthorizationStatusMapping() {
-        XCTAssertEqual(PermissionStatus.from(.authorized), .granted)
-        XCTAssertEqual(PermissionStatus.from(.denied), .denied)
-        XCTAssertEqual(PermissionStatus.from(.restricted), .denied)
-        XCTAssertEqual(PermissionStatus.from(.notDetermined), .notDetermined)
+        XCTAssertEqual(PermissionStatus.from(AVAuthorizationStatus.authorized), .granted)
+        XCTAssertEqual(PermissionStatus.from(AVAuthorizationStatus.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(AVAuthorizationStatus.restricted), .denied)
+        XCTAssertEqual(PermissionStatus.from(AVAuthorizationStatus.notDetermined), .notDetermined)
     }
 
     func testStatusFlags() {
@@ -114,30 +124,122 @@ final class PermissionPilotTests: XCTestCase {
         XCTAssertNil(Permission.screenRecording.requiredInfoPlistKey)
     }
 
-    // MARK: Implemented vs. coming-soon
+    // MARK: Implemented tiers
 
     func testImplementedFlag() {
-        // The six the engine supports today.
-        XCTAssertEqual(Permission.implemented.count, 6)
-        for p in [Permission.accessibility, .screenRecording, .inputMonitoring,
-                  .fullDiskAccess, .camera, .microphone] {
-            XCTAssertTrue(p.isImplemented, "\(p) should be implemented")
+        // Every permission is implemented now.
+        XCTAssertTrue(Permission.allCases.allSatisfy(\.isImplemented))
+        XCTAssertEqual(Permission.implemented.count, Permission.allCases.count)
+        XCTAssertTrue(Permission.comingSoon.isEmpty)
+        // Partition invariant: implemented ∪ comingSoon == allCases, and disjoint.
+        XCTAssertEqual(Set(Permission.implemented).union(Permission.comingSoon),
+                       Set(Permission.allCases))
+        XCTAssertTrue(Set(Permission.implemented).isDisjoint(with: Permission.comingSoon))
+    }
+
+    func testDeepLinkOnlyTier() {
+        // Deep-link-only permissions can't prompt in-app (handled like Full Disk Access).
+        for p in [Permission.fullDiskAccess, .automation, .localNetwork] {
+            XCTAssertFalse(p.canPromptInApp, "\(p) should be deep-link-only")
         }
-        // The roadmap set.
-        XCTAssertEqual(Permission.comingSoon.count, Permission.allCases.count - 6)
-        XCTAssertTrue(Permission.comingSoon.allSatisfy { !$0.isImplemented })
-        for p in [Permission.bluetooth, .location, .automation, .notifications] {
-            XCTAssertFalse(p.isImplemented, "\(p) should be coming-soon")
+        // Automation / Local Network have no detection API → unknown (no system call).
+        XCTAssertEqual(PermissionProbe.status(for: .automation), .unknown)
+        XCTAssertEqual(PermissionProbe.status(for: .localNetwork), .unknown)
+    }
+
+    func testEveryImplementedNonDeepLinkIsPromptable() {
+        let deepLink: Set<Permission> = [.fullDiskAccess, .automation, .localNetwork]
+        for p in Permission.implemented where !deepLink.contains(p) {
+            XCTAssertTrue(p.canPromptInApp, "\(p) should be promptable")
         }
     }
 
-    func testComingSoonNotDetectableOrPromptable() {
-        // No detection for coming-soon permissions.
-        XCTAssertEqual(PermissionProbe.status(for: .bluetooth), .unknown)
-        XCTAssertEqual(PermissionProbe.status(for: .location), .unknown)
-        // And no in-app prompt path.
-        XCTAssertFalse(Permission.bluetooth.canPromptInApp)
-        XCTAssertFalse(Permission.notifications.canPromptInApp)
+    // MARK: Mandatory Info.plist keys
+
+    func testPromptBasedPermissionsHaveMandatoryKey() {
+        // Requesting any of these without its usage string crashes the host.
+        let needKeys: [Permission] = [.camera, .microphone, .bluetooth, .location,
+                                      .contacts, .photos, .speechRecognition,
+                                      .calendars, .reminders]
+        for p in needKeys {
+            XCTAssertNotNil(p.requiredInfoPlistKey, "\(p) must declare its usage key")
+        }
+    }
+
+    func testPermissionsWithoutMandatoryKey() {
+        // These never crash without a key → no mandatory key.
+        for p in [Permission.accessibility, .screenRecording, .inputMonitoring,
+                  .notifications, .fullDiskAccess, .automation, .localNetwork] {
+            XCTAssertNil(p.requiredInfoPlistKey, "\(p) should have no mandatory key")
+        }
+    }
+
+    func testCalendarsRemindersKeyIsVersioned() {
+        if #available(macOS 14.0, *) {
+            XCTAssertEqual(Permission.calendars.requiredInfoPlistKey, "NSCalendarsFullAccessUsageDescription")
+            XCTAssertEqual(Permission.reminders.requiredInfoPlistKey, "NSRemindersFullAccessUsageDescription")
+        } else {
+            XCTAssertEqual(Permission.calendars.requiredInfoPlistKey, "NSCalendarsUsageDescription")
+            XCTAssertEqual(Permission.reminders.requiredInfoPlistKey, "NSRemindersUsageDescription")
+        }
+    }
+
+    // MARK: Framework status mappers (pure)
+
+    func testCLAuthorizationStatusMapping() {
+        // macOS exposes only `.authorizedAlways` (`.authorizedWhenInUse` is iOS-only).
+        XCTAssertEqual(PermissionStatus.from(CLAuthorizationStatus.authorizedAlways), .granted)
+        XCTAssertEqual(PermissionStatus.from(CLAuthorizationStatus.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(CLAuthorizationStatus.restricted), .denied)
+        XCTAssertEqual(PermissionStatus.from(CLAuthorizationStatus.notDetermined), .notDetermined)
+    }
+
+    func testCNAuthorizationStatusMapping() {
+        XCTAssertEqual(PermissionStatus.from(CNAuthorizationStatus.authorized), .granted)
+        XCTAssertEqual(PermissionStatus.from(CNAuthorizationStatus.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(CNAuthorizationStatus.restricted), .denied)
+        XCTAssertEqual(PermissionStatus.from(CNAuthorizationStatus.notDetermined), .notDetermined)
+    }
+
+    func testPHAuthorizationStatusMapping() {
+        XCTAssertEqual(PermissionStatus.from(PHAuthorizationStatus.authorized), .granted)
+        XCTAssertEqual(PermissionStatus.from(PHAuthorizationStatus.limited), .granted)
+        XCTAssertEqual(PermissionStatus.from(PHAuthorizationStatus.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(PHAuthorizationStatus.restricted), .denied)
+        XCTAssertEqual(PermissionStatus.from(PHAuthorizationStatus.notDetermined), .notDetermined)
+    }
+
+    func testSpeechAuthorizationStatusMapping() {
+        XCTAssertEqual(PermissionStatus.from(SFSpeechRecognizerAuthorizationStatus.authorized), .granted)
+        XCTAssertEqual(PermissionStatus.from(SFSpeechRecognizerAuthorizationStatus.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(SFSpeechRecognizerAuthorizationStatus.restricted), .denied)
+        XCTAssertEqual(PermissionStatus.from(SFSpeechRecognizerAuthorizationStatus.notDetermined), .notDetermined)
+    }
+
+    func testBluetoothAuthorizationMapping() {
+        XCTAssertEqual(PermissionStatus.from(CBManagerAuthorization.allowedAlways), .granted)
+        XCTAssertEqual(PermissionStatus.from(CBManagerAuthorization.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(CBManagerAuthorization.restricted), .denied)
+        XCTAssertEqual(PermissionStatus.from(CBManagerAuthorization.notDetermined), .notDetermined)
+    }
+
+    func testNotificationAuthorizationMapping() {
+        XCTAssertEqual(PermissionStatus.from(UNAuthorizationStatus.authorized), .granted)
+        XCTAssertEqual(PermissionStatus.from(UNAuthorizationStatus.provisional), .granted)
+        XCTAssertEqual(PermissionStatus.from(UNAuthorizationStatus.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(UNAuthorizationStatus.notDetermined), .notDetermined)
+    }
+
+    func testEventKitAuthorizationMapping() {
+        XCTAssertEqual(PermissionStatus.from(EKAuthorizationStatus.denied), .denied)
+        XCTAssertEqual(PermissionStatus.from(EKAuthorizationStatus.restricted), .denied)
+        XCTAssertEqual(PermissionStatus.from(EKAuthorizationStatus.notDetermined), .notDetermined)
+        if #available(macOS 14.0, *) {
+            XCTAssertEqual(PermissionStatus.from(EKAuthorizationStatus.fullAccess), .granted)
+            XCTAssertEqual(PermissionStatus.from(EKAuthorizationStatus.writeOnly), .granted)
+        } else {
+            XCTAssertEqual(PermissionStatus.from(EKAuthorizationStatus.authorized), .granted)
+        }
     }
 
     // MARK: Manager

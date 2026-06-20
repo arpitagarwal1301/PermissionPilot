@@ -23,10 +23,35 @@
     <!-- Single instance: reopening activates the running app instead of stacking windows. -->
     <key>LSMultipleInstancesProhibited</key>
     <true/>
-    <!-- Demonstrates graceful handling; required if you add Camera/Microphone. -->
+    <!-- Usage strings: any prompt-based permission CRASHES the host if requested
+         without its key. The demo can reach every permission's "Enable", so it
+         declares them all. Calendars/Reminders need both the macOS 14+ FullAccess
+         key and the macOS 12–13 legacy key. -->
     <key>NSCameraUsageDescription</key>
     <string>PermissionPilot Demo uses the camera to demonstrate the Camera permission.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>PermissionPilot Demo uses the microphone to demonstrate the Microphone permission.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>PermissionPilot Demo uses Bluetooth to demonstrate the Bluetooth permission.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>PermissionPilot Demo uses your location to demonstrate the Location permission.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>PermissionPilot Demo accesses contacts to demonstrate the Contacts permission.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>PermissionPilot Demo accesses your photo library to demonstrate the Photos permission.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>PermissionPilot Demo uses speech recognition to demonstrate the Speech Recognition permission.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>PermissionPilot Demo accesses your calendars to demonstrate the Calendars permission.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>PermissionPilot Demo accesses your calendars to demonstrate the Calendars permission.</string>
+    <key>NSRemindersFullAccessUsageDescription</key>
+    <string>PermissionPilot Demo accesses your reminders to demonstrate the Reminders permission.</string>
+    <key>NSRemindersUsageDescription</key>
+    <string>PermissionPilot Demo accesses your reminders to demonstrate the Reminders permission.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>PermissionPilot Demo sends Apple Events to demonstrate the Automation permission.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>PermissionPilot Demo accesses the local network to demonstrate the Local Network permission.</string>
 </dict>
 </plist>

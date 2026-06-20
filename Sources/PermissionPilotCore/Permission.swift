@@ -6,11 +6,16 @@ import Foundation
 /// toggle in System Settings. PermissionPilot detects status, prompts where the
 /// OS allows, and deep-links to the exact pane otherwise.
 ///
-/// Cases split into two groups: ones the engine fully supports today
-/// (``isImplemented`` == `true`) and ones reserved for the roadmap, surfaced in
-/// the UI as "Coming soon" (``isImplemented`` == `false`).
+/// Every case is fully supported (``isImplemented`` == `true`). Permissions fall
+/// into three tiers by how they're authorized:
+/// - **Prompt-based** — a real in-app consent prompt (camera, microphone,
+///   location, contacts, calendars, reminders, photos, speechRecognition,
+///   bluetooth, notifications) plus the three system-prompt panes (accessibility,
+///   screenRecording, inputMonitoring).
+/// - **Deep-link-only** — macOS exposes no honest in-app prompt/detection, so the
+///   flow deep-links to the exact System Settings pane: fullDiskAccess (status via
+///   heuristic), automation (per-target Apple Events), localNetwork (no status API).
 public enum Permission: String, CaseIterable, Identifiable, Hashable, Sendable {
-    // MARK: Implemented
     /// Control the Mac to automate actions / read on-screen UI (`AXIsProcessTrusted`).
     case accessibility
     /// Capture the screen (`CGPreflightScreenCaptureAccess`).
@@ -23,37 +28,38 @@ public enum Permission: String, CaseIterable, Identifiable, Hashable, Sendable {
     case camera
     /// Use the microphone (`AVCaptureDevice.authorizationStatus(for: .audio)`).
     case microphone
-
-    // MARK: Coming soon (roadmap — shown disabled in the UI)
+    /// Discover/connect Bluetooth devices (`CBManager.authorization`).
     case bluetooth
+    /// Access location (`CLLocationManager.authorizationStatus`).
     case location
+    /// Read/write calendar events (`EKEventStore`, entity `.event`).
     case calendars
+    /// Access contacts (`CNContactStore.authorizationStatus(for: .contacts)`).
     case contacts
+    /// Read/write reminders (`EKEventStore`, entity `.reminder`).
     case reminders
+    /// Access the photo library (`PHPhotoLibrary.authorizationStatus(for: .readWrite)`).
     case photos
+    /// Post user notifications (`UNUserNotificationCenter`; status is async-only).
     case notifications
+    /// Transcribe speech (`SFSpeechRecognizer.authorizationStatus`).
     case speechRecognition
+    /// Control other apps via Apple Events (per-target; deep-link only).
     case automation
+    /// Find/connect devices on the local network (no status API; deep-link only).
     case localNetwork
 
     public var id: String { rawValue }
 
-    /// Whether the engine fully supports detecting/requesting this permission yet.
-    /// `false` cases render as disabled "Coming soon" in the UI.
-    public var isImplemented: Bool {
-        switch self {
-        case .accessibility, .screenRecording, .inputMonitoring,
-             .fullDiskAccess, .camera, .microphone:
-            return true
-        default:
-            return false
-        }
-    }
+    /// Whether the engine fully supports detecting/requesting this permission.
+    /// All cases are implemented today.
+    public var isImplemented: Bool { true }
 
     /// The permissions the engine supports today, in declaration order.
     public static var implemented: [Permission] { allCases.filter(\.isImplemented) }
 
-    /// The roadmap permissions, shown as "Coming soon".
+    /// The roadmap permissions, shown as "Coming soon". Empty now that every
+    /// case is implemented; retained so hosts that referenced it still compile.
     public static var comingSoon: [Permission] { allCases.filter { !$0.isImplemented } }
 }
 
@@ -190,11 +196,12 @@ extension Permission {
 
     /// Whether the OS can show a real consent prompt in-app.
     ///
-    /// `false` for Full Disk Access (deep-link only) and for any not-yet-
-    /// implemented permission.
+    /// `false` for the deep-link-only tier — Full Disk Access (heuristic status),
+    /// Automation (per-target Apple Events), and Local Network (no status API) —
+    /// where there is no honest in-app prompt and the flow opens System Settings.
     public var canPromptInApp: Bool {
         guard isImplemented else { return false }
-        return self != .fullDiskAccess
+        return ![.fullDiskAccess, .automation, .localNetwork].contains(self)
     }
 
     /// Whether granting this permission only takes effect after the app is quit
@@ -214,24 +221,40 @@ extension Permission {
         }
     }
 
-    /// The Info.plist usage-description key required for this permission, if any.
+    /// The Info.plist usage-description key whose **absence crashes the host** when
+    /// this permission is requested — i.e. the mandatory key for the in-app prompt.
     ///
-    /// Camera/Microphone are **required** — the app crashes on first access
-    /// without them. The roadmap keys are documented here for when each ships.
+    /// Returned only for prompt-based privacy permissions (camera, microphone,
+    /// bluetooth, location, calendars, contacts, reminders, photos, speech). The
+    /// crash-guard in ``PermissionProbe`` checks this before prompting.
+    ///
+    /// `nil` for permissions that don't crash without a key:
+    /// - `accessibility` — `NSAccessibilityUsageDescription` is informational only,
+    ///   not enforced by TCC (no crash); request uses `AXIsProcessTrusted`.
+    /// - `screenRecording` / `inputMonitoring` — no usage string.
+    /// - `notifications` — `requestAuthorization` needs no Info.plist key.
+    /// - `fullDiskAccess` / `automation` / `localNetwork` — deep-link only, never
+    ///   trigger an API that would crash (`automation` would use
+    ///   `NSAppleEventsUsageDescription`, `localNetwork` `NSLocalNetworkUsageDescription`
+    ///   only when actually driving those APIs — out of scope for the deep-link flow).
+    ///
+    /// Calendars/Reminders are version-sensitive: macOS 14+ requires the
+    /// `…FullAccess…` key (used by `requestFullAccessTo…`), earlier the legacy key.
     public var requiredInfoPlistKey: String? {
         switch self {
         case .camera:            return "NSCameraUsageDescription"
         case .microphone:        return "NSMicrophoneUsageDescription"
-        case .accessibility:     return "NSAccessibilityUsageDescription" // optional
         case .bluetooth:         return "NSBluetoothAlwaysUsageDescription"
         case .location:          return "NSLocationWhenInUseUsageDescription"
-        case .calendars:         return "NSCalendarsFullAccessUsageDescription"
         case .contacts:          return "NSContactsUsageDescription"
-        case .reminders:         return "NSRemindersFullAccessUsageDescription"
         case .photos:            return "NSPhotoLibraryUsageDescription"
         case .speechRecognition: return "NSSpeechRecognitionUsageDescription"
-        case .automation:        return "NSAppleEventsUsageDescription"
-        case .localNetwork:      return "NSLocalNetworkUsageDescription"
+        case .calendars:
+            if #available(macOS 14.0, *) { return "NSCalendarsFullAccessUsageDescription" }
+            return "NSCalendarsUsageDescription"
+        case .reminders:
+            if #available(macOS 14.0, *) { return "NSRemindersFullAccessUsageDescription" }
+            return "NSRemindersUsageDescription"
         default:                 return nil
         }
     }

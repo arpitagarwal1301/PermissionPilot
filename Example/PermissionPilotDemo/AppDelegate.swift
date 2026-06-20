@@ -13,11 +13,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         installMainMenu()
 
-        // Track all implemented permissions so the grid reflects them live; the
-        // main window also displays the "coming soon" roadmap (Permission.allCases).
+        // Required stays minimal (the three system-prompt panes a window-automation
+        // app actually needs). A tasteful optional subset showcases live consent
+        // prompts; the main window's full board (Permission.allCases) surfaces the
+        // rest, including the deep-link-only Automation / Local Network.
         manager = PermissionManager(
             required: [.accessibility, .screenRecording, .inputMonitoring],
-            optional: [.fullDiskAccess, .camera, .microphone]
+            optional: [.fullDiskAccess, .camera, .microphone,
+                       .contacts, .photos, .calendars, .location]
         )
 
         showMainWindow()
@@ -49,6 +52,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .screenRecording: "So the demo can capture the window you're sharing.",
             .inputMonitoring: "So the demo can detect your global shortcuts.",
             .fullDiskAccess: "So the demo can back up the folders you pick.",
+            .contacts: "So the demo can show people in your shared sessions.",
+            .photos: "So the demo can attach screenshots from your library.",
+            .calendars: "So the demo can schedule recordings on your calendar.",
+            .location: "So the demo can tag captures with where you are.",
         ]
 
         PermissionPilot.presentOnboarding(manager: manager, configuration: configuration)
