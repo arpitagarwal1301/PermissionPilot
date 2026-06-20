@@ -16,6 +16,7 @@ public struct PermissionRow: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.permissionPilotTint) private var tint
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openURL) private var openURL
     @State private var showsDragHelp = false
 
     public init(
@@ -83,12 +84,23 @@ public struct PermissionRow: View {
     @ViewBuilder
     private var trailing: some View {
         if isComingSoon {
-            Text("Coming soon")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, PPDesign.s8)
-                .padding(.vertical, 3)
-                .background(Capsule().strokeBorder(PPColor.separator))
+            HStack(spacing: PPDesign.s8) {
+                Text("Coming soon")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, PPDesign.s8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().strokeBorder(PPColor.separator))
+                if let url = permission.documentationURL {
+                    Button { openURL(url) } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .help("Apple documentation for \(info.title)")
+                    .accessibilityLabel("Learn more about \(info.title) (Apple documentation)")
+                }
+            }
         } else if isGranted {
             HStack(spacing: PPDesign.s4 + 2) {
                 Image(systemName: "checkmark.circle.fill")
@@ -99,11 +111,14 @@ public struct PermissionRow: View {
         } else {
             // Permissions with no request API (Full Disk Access) can't be
             // prompted — guide the user to add the app via drag-to-authorize.
+            // Manual-add panes (Accessibility / Screen Recording / Input
+            // Monitoring / Full Disk Access) show the drag-to-authorize helper —
+            // the app may not be listed yet. Camera/Mic use the system prompt.
             Button("Enable") {
-                if permission.canPromptInApp {
-                    manager.request(permission)
-                } else {
+                if permission.supportsManualAdd {
                     showsDragHelp = true
+                } else {
+                    manager.request(permission)
                 }
             }
             .buttonStyle(.borderedProminent)

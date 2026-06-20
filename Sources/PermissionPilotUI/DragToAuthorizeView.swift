@@ -50,12 +50,12 @@ public struct DragToAuthorizeView: View {
             }
 
             stepRow(1, "Open the \(permissionTitle) list:") {
-                Button("Open System Settings") { manager.openSettings(for: permission) }
+                Button("Open System Settings") { manager.request(permission) }
                     .buttonStyle(.borderedProminent)
                     .applyingPermissionPilotTint(tint)
             }
 
-            stepRow(2, "Add \(appName) — drag its icon into the list, or click + there and pick it:") {
+            stepRow(2, "If \(appName) isn’t listed, add it — drag its icon in, or click + there and pick it:") {
                 HStack(spacing: PPDesign.s16) {
                     draggableIcon
                     Button("Reveal in Finder") {

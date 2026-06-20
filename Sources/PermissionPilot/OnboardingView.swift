@@ -112,9 +112,7 @@ public struct OnboardingView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: PPDesign.cardWidth, alignment: .leading)
                 }
-                if manager.relaunchSuggested {
-                    relaunchBanner
-                }
+                // The "Quit & Reopen" hint is shown by PermissionsView itself.
             }
             .padding(.horizontal, PPDesign.s24)
             .padding(.vertical, PPDesign.s12)
@@ -185,27 +183,6 @@ public struct OnboardingView: View {
         .accessibilityHidden(true)
     }
 
-    private var relaunchBanner: some View {
-        HStack(spacing: PPDesign.s8) {
-            Image(systemName: "arrow.clockwise.circle")
-                .foregroundStyle(.secondary)
-            Text(relaunchMessage)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: PPDesign.s12)
-            Button("Quit & Reopen") { manager.quitAndReopen() }
-                .controlSize(.small)
-        }
-        .padding(.horizontal, PPDesign.s12)
-        .padding(.vertical, PPDesign.s8)
-        .frame(maxWidth: PPDesign.cardWidth)
-        .background(
-            RoundedRectangle(cornerRadius: PPDesign.iconTileRadius, style: .continuous)
-                .fill(PPColor.iconTile(scheme))
-        )
-    }
-
     // The spec's "Skip for optional steps" is satisfied here without a Skip
     // button: optional permissions live inline in the single checklist, and
     // Continue is gated solely on `allRequiredGranted` — never on optional grants,
@@ -227,16 +204,6 @@ public struct OnboardingView: View {
     }
 
     // MARK: Logic
-
-    private var relaunchMessage: String {
-        let titles = manager.relaunchPendingTitles
-        guard !titles.isEmpty else {
-            return "Some changes take effect after you quit and reopen."
-        }
-        let names = ListFormatter.localizedString(byJoining: titles)
-        let verb = titles.count == 1 ? "takes" : "take"
-        return "\(names) \(verb) effect after you quit & reopen."
-    }
 
     private var showsScreenRecordingPrewarning: Bool {
         configuration.showsScreenRecordingPrewarning

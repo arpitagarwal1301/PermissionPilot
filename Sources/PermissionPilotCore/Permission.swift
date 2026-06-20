@@ -235,4 +235,41 @@ extension Permission {
         default:                 return nil
         }
     }
+
+    /// Whether the user can add this app to the permission's list **manually**
+    /// (the System Settings pane has a `+` / accepts a dragged app). True for
+    /// Accessibility, Screen Recording, Input Monitoring, and Full Disk Access —
+    /// these are where an app may need to be added before it can be toggled on.
+    ///
+    /// Camera/Microphone (and similar) can't be added manually: the app only
+    /// appears in their list after it requests access via the system prompt.
+    public var supportsManualAdd: Bool {
+        switch self {
+        case .accessibility, .screenRecording, .inputMonitoring, .fullDiskAccess:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Official Apple documentation for this permission (shown via an info icon on
+    /// "coming soon" items so developers can read how to implement / configure it).
+    public var documentationURL: URL? {
+        let base = "https://developer.apple.com/documentation/"
+        let path: String?
+        switch self {
+        case .bluetooth:         path = "corebluetooth"
+        case .location:          path = "corelocation"
+        case .calendars:         path = "eventkit"
+        case .contacts:          path = "contacts"
+        case .reminders:         path = "eventkit"
+        case .photos:            path = "photokit"
+        case .notifications:     path = "usernotifications"
+        case .speechRecognition: path = "speech"
+        case .automation:        path = "applicationservices"
+        case .localNetwork:      path = "network"
+        default:                 path = nil
+        }
+        return path.flatMap { URL(string: base + $0) }
+    }
 }

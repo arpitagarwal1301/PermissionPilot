@@ -12,6 +12,7 @@ public struct PermissionTile: View {
 
     @Environment(\.colorScheme) private var scheme
     @Environment(\.permissionPilotTint) private var tint
+    @Environment(\.openURL) private var openURL
     @State private var showsDragHelp = false
 
     public init(
@@ -70,7 +71,16 @@ public struct PermissionTile: View {
     @ViewBuilder
     private var badge: some View {
         if isComingSoon {
-            badgeCircle(fill: Color.primary.opacity(0.12), symbol: "clock", foreground: .secondary)
+            if let url = permission.documentationURL {
+                Button { openURL(url) } label: {
+                    badgeCircle(fill: Color.primary.opacity(0.12), symbol: "info", foreground: .secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Apple documentation for \(info.title)")
+                .accessibilityLabel("Learn more about \(info.title) (Apple documentation)")
+            } else {
+                badgeCircle(fill: Color.primary.opacity(0.12), symbol: "clock", foreground: .secondary)
+            }
         } else if isGranted {
             badgeCircle(fill: PPColor.granted, symbol: "checkmark", foreground: Color(nsColor: .windowBackgroundColor))
         } else {
@@ -98,10 +108,10 @@ public struct PermissionTile: View {
     }
 
     private func enable() {
-        if permission.canPromptInApp {
-            manager.request(permission)
-        } else {
+        if permission.supportsManualAdd {
             showsDragHelp = true
+        } else {
+            manager.request(permission)
         }
     }
 

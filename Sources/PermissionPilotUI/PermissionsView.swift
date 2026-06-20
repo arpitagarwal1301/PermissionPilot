@@ -15,6 +15,7 @@ public struct PermissionsView: View {
     private let reasonOverrides: [Permission: String]
     private let title: String
     private let showsCard: Bool
+    private let showsRelaunchHint: Bool
 
     @State private var layout: Layout
     @Environment(\.colorScheme) private var scheme
@@ -30,19 +31,23 @@ public struct PermissionsView: View {
     ///   - reasonOverrides: Per-permission reason copy overrides.
     ///   - defaultLayout: Initial view (default `.list`).
     ///   - showsCard: Whether to draw the rounded card surface (default `true`).
+    ///   - showsRelaunchHint: Whether to show the "Quit & Reopen" footer when a
+    ///     relaunch-requiring permission is pending (default `true`).
     public init(
         manager: PermissionManager,
         permissions: [Permission]? = nil,
         title: String = "Permissions",
         reasonOverrides: [Permission: String] = [:],
         defaultLayout: Layout = .list,
-        showsCard: Bool = true
+        showsCard: Bool = true,
+        showsRelaunchHint: Bool = true
     ) {
         self.manager = manager
         self.permissions = permissions ?? manager.allPermissions
         self.title = title
         self.reasonOverrides = reasonOverrides
         self.showsCard = showsCard
+        self.showsRelaunchHint = showsRelaunchHint
         _layout = State(initialValue: defaultLayout)
     }
 
@@ -55,6 +60,9 @@ public struct PermissionsView: View {
             header
             content
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: layout)
+            if showsRelaunchHint && manager.relaunchSuggested {
+                relaunchBanner
+            }
         }
         .padding(showsCard ? PPDesign.cardPadding : 0)
         .frame(maxWidth: PPDesign.cardWidth)
@@ -126,6 +134,39 @@ public struct PermissionsView: View {
                 }
             }
         }
+    }
+
+    // MARK: Relaunch hint
+
+    private var relaunchBanner: some View {
+        HStack(spacing: PPDesign.s8) {
+            Image(systemName: "arrow.clockwise.circle")
+                .foregroundStyle(.secondary)
+            Text(relaunchMessage)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: PPDesign.s12)
+            Button("Quit & Reopen") { manager.quitAndReopen() }
+                .controlSize(.small)
+        }
+        .padding(.horizontal, PPDesign.s12)
+        .padding(.vertical, PPDesign.s8)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: PPDesign.iconTileRadius, style: .continuous)
+                .fill(PPColor.iconTile(scheme))
+        )
+    }
+
+    private var relaunchMessage: String {
+        let titles = manager.relaunchPendingTitles
+        guard !titles.isEmpty else {
+            return "Some changes take effect after you quit and reopen."
+        }
+        let names = ListFormatter.localizedString(byJoining: titles)
+        let verb = titles.count == 1 ? "takes" : "take"
+        return "\(names) \(verb) effect after you quit & reopen."
     }
 }
 
