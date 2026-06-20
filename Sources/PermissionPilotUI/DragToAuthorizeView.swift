@@ -6,9 +6,9 @@ import PermissionPilotCore
 /// most notably Full Disk Access, where the user must add the app to the
 /// System Settings list themselves.
 ///
-/// It shows the app's icon as a **draggable** item plus short steps and quick
-/// actions, so authorizing is one drag (or a "+") away. Built entirely on
-/// AppKit/SwiftUI drag APIs — no third-party code.
+/// It spells out the two steps, offers both ways to add the app (drag its icon
+/// in, or use the **+** button), and covers the "already listed" case. Built
+/// entirely on AppKit/SwiftUI drag APIs — no third-party code.
 public struct DragToAuthorizeView: View {
     @ObservedObject private var manager: PermissionManager
     private let permission: Permission
@@ -39,58 +39,88 @@ public struct DragToAuthorizeView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: PPDesign.s16) {
-            Text("Add \(appName) to \(permissionTitle)")
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            HStack(alignment: .top, spacing: PPDesign.s16) {
-                draggableIcon
-                VStack(alignment: .leading, spacing: PPDesign.s8) {
-                    step(1, "Click Open System Settings below.")
-                    step(2, "Drag this icon into the list — or click + there and choose \(appName).")
-                    step(3, "Turn its switch on.")
-                }
+            VStack(alignment: .leading, spacing: PPDesign.s4) {
+                Text("Give \(appName) \(permissionTitle)")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text("macOS can’t ask for this one — you add \(appName) to the list yourself.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            HStack(spacing: PPDesign.s12) {
+            stepRow(1, "Open the \(permissionTitle) list:") {
                 Button("Open System Settings") { manager.openSettings(for: permission) }
                     .buttonStyle(.borderedProminent)
                     .applyingPermissionPilotTint(tint)
-                Button("Reveal in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([appURL])
+            }
+
+            stepRow(2, "Add \(appName) — drag its icon into the list, or click + there and pick it:") {
+                HStack(spacing: PPDesign.s16) {
+                    draggableIcon
+                    Button("Reveal in Finder") {
+                        NSWorkspace.shared.activateFileViewerSelecting([appURL])
+                    }
                 }
             }
+
+            Divider()
+
+            Label("Already in the list? Just switch it on.", systemImage: "info.circle")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
         .padding(PPDesign.s20)
-        .frame(width: 380)
+        .frame(width: 420)
+    }
+
+    // MARK: Pieces
+
+    private func stepRow<Content: View>(
+        _ number: Int,
+        _ text: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: PPDesign.s8) {
+            HStack(alignment: .firstTextBaseline, spacing: PPDesign.s8) {
+                badge(number)
+                Text(text)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            content()
+                .padding(.leading, 26) // align under the step text, past the badge
+        }
+    }
+
+    private func badge(_ number: Int) -> some View {
+        Text("\(number)")
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.secondary)
+            .frame(width: 18, height: 18)
+            .background(Circle().fill(Color.primary.opacity(0.08)))
     }
 
     private var draggableIcon: some View {
         VStack(spacing: PPDesign.s4) {
             Image(nsImage: NSWorkspace.shared.icon(forFile: appURL.path))
                 .resizable()
-                .frame(width: 56, height: 56)
+                .frame(width: 48, height: 48)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [4]))
+                        .foregroundStyle(.secondary)
+                        .opacity(0.55)
+                )
                 .onDrag { NSItemProvider(contentsOf: appURL) ?? NSItemProvider() }
-            Text("drag")
+            Text("drag \(appName)")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
+        .help("Drag into the \(permissionTitle) list in System Settings")
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(appName) icon. Drag it into the System Settings list.")
-    }
-
-    private func step(_ number: Int, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: PPDesign.s8) {
-            Text("\(number)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-                .frame(width: 18, height: 18)
-                .background(Circle().fill(Color.primary.opacity(0.08)))
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
     }
 }
 

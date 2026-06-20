@@ -130,6 +130,20 @@ public final class PermissionManager: ObservableObject {
         allPermissions.contains { $0.mayRequireRelaunch && status(for: $0) == .granted }
     }
 
+    /// Whether a relaunch-requiring permission is still ungranted — its grant
+    /// only applies after quit & reopen (Input Monitoring; pre-Sequoia Screen
+    /// Recording), so the UI should surface a "Quit & Reopen" affordance.
+    public var relaunchSuggested: Bool {
+        allPermissions.contains { $0.mayRequireRelaunch && status(for: $0) != .granted }
+    }
+
+    /// Titles of permissions that may need a relaunch to take effect (ungranted).
+    public var relaunchPendingTitles: [String] {
+        allPermissions
+            .filter { $0.mayRequireRelaunch && status(for: $0) != .granted }
+            .map { info(for: $0).title }
+    }
+
     // MARK: Actions
 
     /// Re-detects the status of every declared permission. Cheap; safe to call often.

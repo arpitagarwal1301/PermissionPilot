@@ -111,7 +111,7 @@ public struct OnboardingView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: PPDesign.cardWidth, alignment: .leading)
                 }
-                if manager.needsRelaunch {
+                if manager.relaunchSuggested {
                     relaunchBanner
                 }
             }
@@ -188,9 +188,10 @@ public struct OnboardingView: View {
         HStack(spacing: PPDesign.s8) {
             Image(systemName: "arrow.clockwise.circle")
                 .foregroundStyle(.secondary)
-            Text("Some changes take effect after you quit and reopen.")
+            Text(relaunchMessage)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: PPDesign.s12)
             Button("Quit & Reopen") { manager.quitAndReopen() }
                 .controlSize(.small)
@@ -225,6 +226,16 @@ public struct OnboardingView: View {
     }
 
     // MARK: Logic
+
+    private var relaunchMessage: String {
+        let titles = manager.relaunchPendingTitles
+        guard !titles.isEmpty else {
+            return "Some changes take effect after you quit and reopen."
+        }
+        let names = ListFormatter.localizedString(byJoining: titles)
+        let verb = titles.count == 1 ? "takes" : "take"
+        return "\(names) \(verb) effect after you quit & reopen."
+    }
 
     private var showsScreenRecordingPrewarning: Bool {
         configuration.showsScreenRecordingPrewarning

@@ -97,11 +97,18 @@ enum PermissionProbe {
             completion(accessibilityStatus())
 
         case .screenRecording:
+            // First call prompts + adds the app; afterward it's silent — so also
+            // open the pane, ensuring "Enable" always leads somewhere visible.
             let granted = CGRequestScreenCaptureAccess()
+            if !granted { SystemSettingsLink.open(.screenRecording) }
             completion(granted ? .granted : screenRecordingStatus())
 
         case .inputMonitoring:
+            // Registers the app (and prompts the first time), but the grant only
+            // applies after relaunch and later calls are silent — open the pane so
+            // the toggle is obvious.
             let granted = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+            if !granted { SystemSettingsLink.open(.inputMonitoring) }
             completion(granted ? .granted : inputMonitoringStatus())
 
         case .camera:
@@ -116,6 +123,7 @@ enum PermissionProbe {
         }
     }
 
+    @MainActor
     private static func requestMedia(
         _ permission: Permission,
         _ mediaType: AVMediaType,
@@ -131,10 +139,16 @@ enum PermissionProbe {
             completion(.notDetermined)
             return
         }
-        AVCaptureDevice.requestAccess(for: mediaType) { granted in
-            DispatchQueue.main.async {
-                completion(granted ? .granted : .denied)
+        let current = AVCaptureDevice.authorizationStatus(for: mediaType)
+        if current == .notDetermined {
+            // First time only: a true one-time system prompt can grant in place.
+            AVCaptureDevice.requestAccess(for: mediaType) { granted in
+                DispatchQueue.main.async { completion(granted ? .granted : .denied) }
             }
+        } else {
+            // Already decided — the OS won't prompt again, so route to System Settings.
+            SystemSettingsLink.open(permission)
+            completion(PermissionStatus.from(current))
         }
     }
 }

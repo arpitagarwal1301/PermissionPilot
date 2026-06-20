@@ -60,7 +60,7 @@ enum SnapshotMode {
             let iconURL = FileManager.default.fileExists(atPath: appCandidate.path) ? appCandidate : Bundle.main.bundleURL
             let drag = DragToAuthorizeView(manager: manager, permission: .fullDiskAccess, appURL: iconURL, appName: "YourApp")
                 .environment(\.colorScheme, scheme)
-            render(drag, size: NSSize(width: 380, height: 280),
+            render(drag, size: NSSize(width: 420, height: 440),
                    appearance: appearanceName, to: "\(outDir)/4-drag-to-authorize_\(schemeName).png")
         }
         print("WROTE snapshots to \(outDir)")
