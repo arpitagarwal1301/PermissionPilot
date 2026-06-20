@@ -21,18 +21,20 @@ public struct OnboardingView: View {
     private let configuration: OnboardingConfiguration
     private let onFinish: () -> Void
 
-    @State private var step: Step = .welcome
+    @State private var step: Step
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
         manager: PermissionManager,
         configuration: OnboardingConfiguration,
+        initialStep: Step = .welcome,
         onFinish: @escaping () -> Void = {}
     ) {
         self.manager = manager
         self.configuration = configuration
         self.onFinish = onFinish
+        _step = State(initialValue: initialStep)
     }
 
     public var body: some View {

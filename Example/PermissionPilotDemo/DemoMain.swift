@@ -10,6 +10,13 @@ import AppKit
 @main
 struct DemoMain {
     static func main() async {
+        let args = CommandLine.arguments
+        // Headless asset generation: render the wizard screens to PNGs and exit.
+        if let i = args.firstIndex(of: "--snapshot") {
+            let outDir = (i + 1 < args.count) ? args[i + 1] : "/tmp/pp_snaps"
+            await MainActor.run { SnapshotMode.run(outDir: outDir) }
+            return
+        }
         await MainActor.run {
             let app = NSApplication.shared
             let delegate = AppDelegate()

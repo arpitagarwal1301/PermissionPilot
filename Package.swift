@@ -42,7 +42,8 @@ let package = Package(
         .executableTarget(
             name: "PermissionPilotDemo",
             dependencies: ["PermissionPilot"],
-            path: "Example/PermissionPilotDemo"
+            path: "Example/PermissionPilotDemo",
+            exclude: ["Info.plist"] // bundled by Example/build-demo-app.sh, not a Swift source
         ),
         // Tests.
         .testTarget(

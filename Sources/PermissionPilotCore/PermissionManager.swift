@@ -37,6 +37,9 @@ public final class PermissionManager: ObservableObject {
 
     private let infoOverrides: [Permission: PermissionInfo]
     private let pollInterval: TimeInterval
+    /// When `true`, statuses are fixed (preview/snapshot/test) and `refresh()`
+    /// and `request(_:)` are no-ops so live detection can't clobber them.
+    private let isStatic: Bool
     private var activationObserver: NSObjectProtocol?
     private var pollTimer: Timer?
 
@@ -59,8 +62,28 @@ public final class PermissionManager: ObservableObject {
         self.allPermissions = required + dedupedOptional
         self.infoOverrides = infoOverrides
         self.pollInterval = pollInterval
+        self.isStatic = false
         refresh()
         startMonitoring()
+    }
+
+    /// Creates a manager with **fixed** statuses and no live monitoring — for
+    /// SwiftUI previews, snapshots, and tests. The status map never changes.
+    public init(
+        required: [Permission],
+        optional: [Permission] = [],
+        statuses: [Permission: PermissionStatus],
+        infoOverrides: [Permission: PermissionInfo] = [:]
+    ) {
+        self.required = required
+        let dedupedOptional = optional.filter { !required.contains($0) }
+        self.optional = dedupedOptional
+        self.allPermissions = required + dedupedOptional
+        self.infoOverrides = infoOverrides
+        self.pollInterval = 0
+        self.isStatic = true
+        self.statuses = statuses
+        // Intentionally no refresh()/startMonitoring(): fixed preview state.
     }
 
     deinit {
@@ -110,7 +133,9 @@ public final class PermissionManager: ObservableObject {
     // MARK: Actions
 
     /// Re-detects the status of every declared permission. Cheap; safe to call often.
+    /// No-op for a fixed (preview/snapshot/test) manager.
     public func refresh() {
+        guard !isStatic else { return }
         var updated = statuses
         for permission in allPermissions {
             updated[permission] = PermissionProbe.status(for: permission)
@@ -123,6 +148,7 @@ public final class PermissionManager: ObservableObject {
     /// Requests `permission` — shows a system prompt where the OS allows, else
     /// opens the System Settings deep-link — then refreshes status.
     public func request(_ permission: Permission) {
+        guard !isStatic else { return }
         PermissionProbe.request(permission) { [weak self] status in
             Task { @MainActor in
                 guard let self else { return }

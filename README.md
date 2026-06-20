@@ -210,14 +210,26 @@ That's on your build setup.
 
 A runnable demo lives in [`Example/PermissionPilotDemo`](Example/PermissionPilotDemo)
 — the full wizard with four permissions plus a live status window and "re-run
-onboarding" controls:
+onboarding" controls.
+
+**To actually test permission toggling, run it as a signed `.app` bundle:**
 
 ```bash
-swift run PermissionPilotDemo
+Example/build-demo-app.sh --open
 ```
 
-(Running an unsigned SPM binary is fine for a look at the UI; for grants that
-**persist**, build a signed app bundle — see the signing section above.)
+This builds, bundles, signs, and launches **PermissionPilot Demo** as its own
+app — so it appears under that name in System Settings and permission toggles
+take effect (Accessibility live; Input Monitoring after the built-in Quit &
+Reopen). The script uses your Apple Development / Developer ID identity if you
+have one (grants then persist across rebuilds), otherwise ad-hoc signs.
+
+> **Don't test permissions with `swift run PermissionPilotDemo`.** That produces
+> an *unbundled, unsigned* binary, so macOS attributes its permission requests
+> to the **responsible parent process** (your terminal) — System Settings shows
+> the wrong app and toggles never reflect back to the demo. `swift run` is fine
+> for a quick look at the UI, nothing more. (This is the same code-signing/TCC
+> rule described above — it applies to *your* app too.)
 
 ---
 

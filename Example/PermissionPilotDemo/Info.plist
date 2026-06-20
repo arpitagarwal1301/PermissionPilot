@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>PermissionPilotDemo</string>
+    <key>CFBundleDisplayName</key>
+    <string>PermissionPilot Demo</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.permissionpilot.demo</string>
+    <key>CFBundleExecutable</key>
+    <string>PermissionPilotDemo</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>12.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <!-- Demonstrates graceful handling; required if you add Camera/Microphone. -->
+    <key>NSCameraUsageDescription</key>
+    <string>PermissionPilot Demo uses the camera to demonstrate the Camera permission.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>PermissionPilot Demo uses the microphone to demonstrate the Microphone permission.</string>
+</dict>
+</plist>
