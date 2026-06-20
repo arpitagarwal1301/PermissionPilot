@@ -40,15 +40,27 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/$PRODUCT"
 cp "$PLIST" "$APP/Contents/Info.plist"
 
-# Prefer a real signing identity (grants persist across rebuilds); otherwise
-# ad-hoc sign (works for this session; the grant may reset when you rebuild).
-IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null \
-  | sed -n 's/.*"\(Apple Development[^"]*\|Developer ID Application[^"]*\)".*/\1/p' | head -1 || true)"
+# --- Signing ---------------------------------------------------------------
+# Why this matters: TCC ties a permission grant to the app's code signature. A
+# real Apple identity gives a stable, trusted signature so grants stick and
+# reflect (turn green). Ad-hoc has an unstable identity TCC won't reliably
+# honor — used only as a last resort for a quick UI look.
+real_identity() {
+  # NB: awk (not BSD sed) — macOS sed lacks \| alternation, which silently
+  # returned empty and forced an ad-hoc fallback even when an identity existed.
+  security find-identity -v -p codesigning 2>/dev/null \
+    | awk -F'"' '/Apple Development|Developer ID Application/ { print $2; exit }'
+}
+
+IDENTITY="$(real_identity || true)"
 if [ -n "${IDENTITY:-}" ]; then
-  echo "▸ Signing with: $IDENTITY"
+  echo "▸ Signing with Apple identity: $IDENTITY"
   codesign --force --options runtime --sign "$IDENTITY" "$APP" >/dev/null
 else
-  echo "▸ No Developer identity found — ad-hoc signing (grant may reset on rebuild)."
+  echo "▸ No Apple Development / Developer ID identity found — ad-hoc signing."
+  echo "  TCC grants are unreliable when ad-hoc signed. Get a FREE identity via"
+  echo "  Xcode ▸ Settings ▸ Accounts ▸ (add Apple ID) ▸ Manage Certificates ▸ + ▸ Apple Development,"
+  echo "  then re-run this script."
   codesign --force --sign - "$APP" >/dev/null
 fi
 
