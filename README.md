@@ -128,9 +128,12 @@ policy can silently suppress prompts for non-notarized apps. PermissionPilot
 surfaces these states clearly but **cannot fix signing** — that's your build setup.
 
 <p align="center">
-  <img src="docs/board-grid-dark.png" width="600" alt="All 16 macOS permissions in the List ⇄ Grid board">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/board-grid-dark.png">
+    <img src="docs/board-grid-light.png" width="600" alt="All 16 macOS permissions in the List ⇄ Grid board">
+  </picture>
 </p>
-<p align="center"><sub>All 16 permissions — List ⇄ Grid, live status.</sub></p>
+<p align="center"><sub>All 16 permissions — List ⇄ Grid, live status. Adapts to your theme.</sub></p>
 
 <details>
 <summary><b>Per-permission reference</b> — detection · prompt · Settings anchor · Info.plist key</summary>
