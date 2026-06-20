@@ -15,6 +15,7 @@ public struct PermissionRow: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.permissionPilotTint) private var tint
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var showsDragHelp = false
 
     public init(
         manager: PermissionManager,
@@ -83,10 +84,21 @@ public struct PermissionRow: View {
             .font(.subheadline)
             .foregroundStyle(PPColor.granted)
         } else {
-            Button("Enable") { manager.request(permission) }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .applyingPermissionPilotTint(tint)
+            // Permissions with no request API (Full Disk Access) can't be
+            // prompted — guide the user to add the app via drag-to-authorize.
+            Button("Enable") {
+                if permission.canPromptInApp {
+                    manager.request(permission)
+                } else {
+                    showsDragHelp = true
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .applyingPermissionPilotTint(tint)
+            .popover(isPresented: $showsDragHelp, arrowEdge: .bottom) {
+                DragToAuthorizeView(manager: manager, permission: permission)
+            }
         }
     }
 

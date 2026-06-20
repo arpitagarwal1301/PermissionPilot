@@ -7,9 +7,10 @@
 // Built entirely on Apple frameworks: Foundation, AppKit, ApplicationServices,
 // CoreGraphics, AVFoundation, IOKit.hid. No third-party dependencies.
 //
-// The Full Disk Access heuristic and several detection approaches are informed
-// by two MIT-licensed projects — PermissionFlow and FullDiskAccess — studied for
-// approach and credited here, but never imported.
+// Implemented independently — detection, deep-links, the wizard, and
+// drag-to-authorize are all original. The Full Disk Access check uses the
+// well-known technique of probing a TCC-protected file (also used by the
+// MIT-licensed FullDiskAccess project).
 
 import Foundation
 

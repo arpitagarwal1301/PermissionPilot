@@ -235,11 +235,13 @@ have one (grants then persist across rebuilds), otherwise ad-hoc signs.
 
 ## Credits
 
-PermissionPilot imports **no third-party code**. Two MIT-licensed projects were
-studied for approach and are credited here:
+PermissionPilot imports **no third-party code** and is implemented independently
+on Apple frameworks — detection, deep-links, the onboarding wizard, and
+drag-to-authorize are all original.
 
-- [PermissionFlow](https://github.com/jaywcjlove/PermissionFlow) — permission detection / deep-link / drag-to-authorize patterns.
-- [FullDiskAccess](https://github.com/inket/FullDiskAccess) — the Full Disk Access heuristic.
+The Full Disk Access check uses the well-known technique of probing a
+TCC-protected file, as also used by the MIT-licensed
+[FullDiskAccess](https://github.com/inket/FullDiskAccess).
 
 ## License
 

@@ -45,32 +45,46 @@ enum SnapshotMode {
             ("dark", .dark, .darkAqua),
         ]
 
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 700, height: 540),
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        window.isReleasedWhenClosed = false
-        window.center()
-
         for (schemeName, scheme, appearanceName) in schemes {
             NSApp.appearance = NSAppearance(named: appearanceName)
-            window.appearance = NSAppearance(named: appearanceName)
             for (stepName, step) in steps {
                 let root = OnboardingView(manager: manager, configuration: cfg, initialStep: step)
-                    .frame(width: 700, height: 540)
                     .environment(\.colorScheme, scheme)
-                window.contentViewController = NSHostingController(rootView: root)
-                window.orderFrontRegardless()
-                window.displayIfNeeded()
-                // Let SwiftUI commit its layout/render before capturing.
-                RunLoop.current.run(until: Date().addingTimeInterval(0.4))
-                capture(window, to: "\(outDir)/\(stepName)_\(schemeName).png")
+                render(root, size: NSSize(width: 700, height: 540),
+                       appearance: appearanceName, to: "\(outDir)/\(stepName)_\(schemeName).png")
             }
+            // Drag-to-authorize helper (Full Disk Access). Use the built .app's
+            // icon if present (the unbundled snapshot binary would show a folder).
+            let appCandidate = Bundle.main.bundleURL.deletingLastPathComponent()
+                .appendingPathComponent("PermissionPilot Demo.app")
+            let iconURL = FileManager.default.fileExists(atPath: appCandidate.path) ? appCandidate : Bundle.main.bundleURL
+            let drag = DragToAuthorizeView(manager: manager, permission: .fullDiskAccess, appURL: iconURL, appName: "YourApp")
+                .environment(\.colorScheme, scheme)
+            render(drag, size: NSSize(width: 380, height: 280),
+                   appearance: appearanceName, to: "\(outDir)/4-drag-to-authorize_\(schemeName).png")
         }
-        window.orderOut(nil)
         print("WROTE snapshots to \(outDir)")
+    }
+
+    static func render<V: View>(_ view: V, size: NSSize, appearance: NSAppearance.Name, to path: String) {
+        let window = NSWindow(
+            contentRect: NSRect(origin: .zero, size: size),
+            styleMask: [.borderless], backing: .buffered, defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.appearance = NSAppearance(named: appearance)
+        window.contentViewController = NSHostingController(
+            rootView: view
+                .frame(width: size.width, height: size.height)
+                .background(Color(nsColor: .windowBackgroundColor))
+        )
+        window.center()
+        window.orderFrontRegardless()
+        window.displayIfNeeded()
+        // Let SwiftUI commit its layout/render before capturing.
+        RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        capture(window, to: path)
+        window.orderOut(nil)
     }
 
     static func capture(_ window: NSWindow, to path: String) {
