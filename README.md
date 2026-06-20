@@ -29,6 +29,12 @@ and onboarding UI. PermissionPilot is that layer, done once, properly:
 > The SDK ships **no branding of its own** — every string, icon, and the accent
 > color come from your app, each with a sensible default.
 
+<p align="center">
+  <img src="docs/flow.png" alt="PermissionPilot onboarding flow — welcome, grant, done" width="100%">
+</p>
+
+<p align="center"><sub>The first-run wizard: welcome → grant (live checklist + deep-links) → done.</sub></p>
+
 ---
 
 ## Requirements

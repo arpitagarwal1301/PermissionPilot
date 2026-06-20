@@ -63,6 +63,29 @@ enum SnapshotMode {
             render(drag, size: NSSize(width: 420, height: 440),
                    appearance: appearanceName, to: "\(outDir)/4-drag-to-authorize_\(schemeName).png")
         }
+        // Hero flow banner composed from the real app screens (dark only).
+        NSApp.appearance = NSAppearance(named: .darkAqua)
+        let bm = PermissionManager(
+            required: [.accessibility, .screenRecording, .inputMonitoring],
+            optional: [.fullDiskAccess, .camera, .microphone],
+            statuses: [
+                .accessibility: .granted, .screenRecording: .granted, .inputMonitoring: .denied,
+                .fullDiskAccess: .denied, .camera: .granted, .microphone: .denied,
+            ]
+        )
+        var bcfg = OnboardingConfiguration(appName: "YourApp")
+        bcfg.reasons = [
+            .accessibility: "Resize windows with your hotkey.",
+            .screenRecording: "Capture the window you're sharing.",
+            .inputMonitoring: "Detect your global shortcuts.",
+            .fullDiskAccess: "Back up the folders you pick.",
+            .camera: "Use the camera for video.",
+            .microphone: "Use the mic for audio.",
+        ]
+        let banner = HeroFlowBanner(manager: bm, configuration: bcfg).environment(\.colorScheme, .dark)
+        render(banner, size: NSSize(width: 1160, height: 600), appearance: .darkAqua,
+               to: "\(outDir)/flow-hero_dark.png")
+
         print("WROTE snapshots to \(outDir)")
     }
 
