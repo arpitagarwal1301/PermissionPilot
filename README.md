@@ -8,6 +8,7 @@
 Detects, prompts, deep-links, and onboards across **16 macOS permissions** —
 **zero dependencies**, Apple frameworks only.
 
+[![CI](https://github.com/arpitagarwal1301/PermissionPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/arpitagarwal1301/PermissionPilot/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/platform-macOS%2012%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange)
 ![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen)
