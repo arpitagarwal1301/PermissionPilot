@@ -33,7 +33,35 @@ layer, done once:
 ## Requirements
 
 - macOS 12+, Swift 5.9+ / Xcode 15+
-- A **non-sandboxed** app — TCC deep-links are disallowed under the App Sandbox / Mac App Store.
+- Built for **non-sandboxed** apps. The engine + detection work under the App
+  Sandbox too, but several permissions (Accessibility, Input Monitoring, Full Disk
+  Access, Automation) don't — see **Sandbox compatibility** below.
+
+<details>
+<summary><b>Sandbox compatibility</b></summary>
+
+PermissionPilot wraps only public Apple APIs, so its engine and **detection run
+fine under the App Sandbox**. Whether a given *permission* is usable while
+sandboxed is an Apple/entitlements matter, not a PermissionPilot one — it splits
+in three:
+
+- **Usable sandboxed** — add the matching App Sandbox entitlement + usage string:
+  Camera, Microphone, Photos, Contacts, Calendars, Reminders, Location, Speech
+  Recognition, Bluetooth, Notifications. Screen Recording works too (via
+  ScreenCaptureKit), and the System Settings deep-links go through
+  `NSWorkspace.open`, which the sandbox permits.
+- **Not usable sandboxed** (Apple's position, not a library limit):
+  **Accessibility** — `AXIsProcessTrusted()` still returns a value, but
+  `AXUIElement` calls fail `.cannotComplete`; **Input Monitoring** — global event
+  taps are restricted; **Full Disk Access** — the container blocks file access
+  regardless, and the detection heuristic can't read its probe files (reports
+  `.unknown`); **Automation** — needs scripting-target entitlements.
+
+> A status call returning a value is **not** proof the capability works. If you're
+> sandboxed, verify the real capability under your entitlements — an actual
+> `AXUIElement` call, a live `CGEventTap`, a returned capture frame — not just the
+> preflight check.
+</details>
 
 ## Install
 

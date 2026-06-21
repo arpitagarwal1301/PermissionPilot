@@ -25,6 +25,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `CHANGELOG.md` and `CONTRIBUTING.md`.
 
 ### Fixed
+- **Docs:** corrected the App Sandbox guidance. The engine/detection work
+  sandboxed, and the standard privacy permissions are usable with the matching
+  entitlements; only Accessibility, Input Monitoring, Full Disk Access, and
+  Automation are sandbox-incompatible (was an over-broad "non-sandboxed only").
 - Demo build script now copies the SwiftPM resource bundles into the `.app`, so
   `Bundle.module` (localizations) resolves at runtime.
 - `EKAuthorizationStatus` mapping no longer emits a "switch must be exhaustive"
