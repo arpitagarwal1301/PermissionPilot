@@ -19,3 +19,6 @@ build/
 *.moved-aside
 *.hmap
 *.ipa
+
+# Local-only promotion drafts (not part of the package)
+PROMOTION.md
