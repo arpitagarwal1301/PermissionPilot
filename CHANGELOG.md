@@ -10,9 +10,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **README visuals** — an animated light/dark wizard-flow GIF (shown side by
   side) and a theme-aware 16-permission board grid. `SnapshotMode` now renders
   the board in both themes for regenerable assets.
-- **Downloadable demo** — a universal, ad-hoc-signed `.dmg` (built via
-  `Example/make-dmg.sh`) attached to the GitHub release, so devs can evaluate the
-  flow without building. Not notarized; open via right-click → Open.
+- **Downloadable demo** — universal, ad-hoc-signed installers attached to the
+  GitHub release so devs can evaluate without building: a `.pkg` (recommended —
+  `Example/make-pkg.sh`; the installed app opens clean, no per-launch prompt) and
+  a `.dmg` (`Example/make-dmg.sh`). Neither is notarized; each needs a one-time
+  GUI approval (right-click → Open / System Settings → Open Anyway).
 - **Wizard customization** via `OnboardingConfiguration`: `showsWelcomeStep` and
   `showsDoneStep` to omit the intro / "all set" screens (e.g. when the host has
   its own onboarding and wants only the permissions step), and `colorScheme` to

@@ -198,20 +198,31 @@ in-app prompt), so their rows always open System Settings.
 
 ## Try the demo
 
-Download **[PermissionPilot-Demo.dmg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.dmg)**
-(universal) and run it — the full wizard plus a live status window showing all 16
-permissions (List ⇄ Grid). No build required; good for evaluating the flow before
-you integrate.
+The full wizard plus a live status window showing all 16 permissions (List ⇄
+Grid) — no build required, good for evaluating the flow before you integrate.
+Both downloads are universal (Apple Silicon + Intel). Neither is notarized (this
+repo ships no paid Developer ID), so each needs a **one-time, GUI-only** approval.
 
-It's **ad-hoc signed, not notarized** (it's a dev tool, not a shipping app), so
-macOS Gatekeeper warns on first launch. Open it once via either:
+### Recommended — installer (`.pkg`)
+
+Download **[PermissionPilot-Demo.pkg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.pkg)** and double-click it.
+
+macOS asks you to approve the unidentified installer **once** — **right-click the
+`.pkg` → Open**, or **System Settings → Privacy & Security → Open Anyway**. No
+Terminal. After it installs, `PermissionPilot Demo` is in `/Applications` and
+**opens cleanly** — pkg-installed files aren't quarantined, so there's no
+per-launch prompt.
+
+### Alternative — disk image (`.dmg`)
+
+Download **[PermissionPilot-Demo.dmg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.dmg)**, drag the app to Applications, then on first launch (the app itself is quarantined here):
 
 - **Right-click** the app → **Open** → **Open**, or
 - `xattr -dr com.apple.quarantine "/Applications/PermissionPilot Demo.app"`
 
 > For your *own* app, sign with a stable identity (Developer ID + notarization for
-> distribution) — see the code-signing note above. The demo is ad-hoc only because
-> this repo ships no paid Developer ID.
+> distribution) — see the code-signing note above. The demo is ad-hoc signed only
+> because this repo ships no paid Developer ID.
 
 ### Build it yourself
 
