@@ -4,15 +4,17 @@
 
 # PermissionPilot
 
+<p align="center">
+  <a href="https://github.com/arpitagarwal1301/PermissionPilot/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/arpitagarwal1301/PermissionPilot/ci.yml?branch=main&style=flat-square" alt="CI"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%2012+-lightgrey.svg?style=flat-square" alt="Platform: macOS 12+">
+  <img src="https://img.shields.io/badge/Swift-5.9+-orange.svg?style=flat-square" alt="Swift 5.9+">
+  <img src="https://img.shields.io/badge/SPM-compatible-brightgreen.svg?style=flat-square" alt="SPM compatible">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
+</p>
+
 **Drop-in SwiftUI onboarding + permissions flow for non–App Store macOS apps.**
 Detects, prompts, deep-links, and onboards across **16 macOS permissions** —
 **zero dependencies**, Apple frameworks only.
-
-[![CI](https://github.com/arpitagarwal1301/PermissionPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/arpitagarwal1301/PermissionPilot/actions/workflows/ci.yml)
-![Platform](https://img.shields.io/badge/platform-macOS%2012%2B-blue)
-![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange)
-![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Locally-distributed Mac apps (DMG / Homebrew) can't grant TCC permissions
 programmatically — users flip toggles in System Settings, and every app re-invents
@@ -57,6 +59,7 @@ in three:
   regardless, and the detection heuristic can't read its probe files (reports
   `.unknown`); **Automation** — needs scripting-target entitlements.
 
+> [!WARNING]
 > A status call returning a value is **not** proof the capability works. If you're
 > sandboxed, verify the real capability under your entitlements — an actual
 > `AXUIElement` call, a live `CGEventTap`, a returned capture frame — not just the
@@ -108,6 +111,7 @@ config.colorScheme      = .dark   // pin light/dark; nil (default) follows the s
 config.tint             = .indigo // accent; icon and per-permission reasons too
 ```
 
+> [!TIP]
 > Already have your own onboarding and just want the live permission UI? Skip the
 > wizard entirely and drop `PermissionsView(manager:)` / `PermissionChecklist(manager:)`
 > straight into your views.
@@ -220,6 +224,7 @@ Download **[PermissionPilot-Demo.dmg](https://github.com/arpitagarwal1301/Permis
 - **Right-click** the app → **Open** → **Open**, or
 - `xattr -dr com.apple.quarantine "/Applications/PermissionPilot Demo.app"`
 
+> [!NOTE]
 > For your *own* app, sign with a stable identity (Developer ID + notarization for
 > distribution) — see the code-signing note above. The demo is ad-hoc signed only
 > because this repo ships no paid Developer ID.
@@ -241,3 +246,7 @@ terminal), so System Settings shows the wrong app and toggles never stick.
 drag-to-authorize are original. The Full Disk Access check uses the
 TCC-protected-file probe technique, as also used by the MIT-licensed
 [FullDiskAccess](https://github.com/inket/FullDiskAccess).
+
+---
+
+<p align="center"><sub>Built by <a href="https://github.com/arpitagarwal1301">Arpit Agarwal</a> · zero dependencies, Apple frameworks only.</sub></p>
