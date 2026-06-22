@@ -207,22 +207,17 @@ Grid) — no build required, good for evaluating the flow before you integrate.
 Both downloads are universal (Apple Silicon + Intel). Neither is notarized (this
 repo ships no paid Developer ID), so each needs a **one-time, GUI-only** approval.
 
-### Recommended — installer (`.pkg`)
+**Recommended — the installer (`.pkg`):**
+1. Download **[PermissionPilot-Demo.pkg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.pkg)** from the latest release.
+2. Open it. If macOS calls it "unidentified," **right-click the `.pkg` → Open** (or System Settings → Privacy & Security → **Open Anyway**) — once.
+3. Click through the installer. `PermissionPilot Demo` lands in Applications and **opens normally afterward** — pkg-installed files aren't quarantined, so there's no per-launch prompt.
 
-Download **[PermissionPilot-Demo.pkg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.pkg)** and double-click it.
-
-macOS asks you to approve the unidentified installer **once** — **right-click the
-`.pkg` → Open**, or **System Settings → Privacy & Security → Open Anyway**. No
-Terminal. After it installs, `PermissionPilot Demo` is in `/Applications` and
-**opens cleanly** — pkg-installed files aren't quarantined, so there's no
-per-launch prompt.
-
-### Alternative — disk image (`.dmg`)
-
-Download **[PermissionPilot-Demo.dmg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.dmg)**, drag the app to Applications, then on first launch (the app itself is quarantined here):
-
-- **Right-click** the app → **Open** → **Open**, or
-- `xattr -dr com.apple.quarantine "/Applications/PermissionPilot Demo.app"`
+**Alternative — the disk image (`.dmg`):**
+1. Download **[PermissionPilot-Demo.dmg](https://github.com/arpitagarwal1301/PermissionPilot/releases/latest/download/PermissionPilot-Demo.dmg)**, open it, and drag **PermissionPilot Demo** into Applications.
+2. macOS blocks it on first launch — unsigned downloads are just quarantined. Clear it once: **right-click the app → Open → Open**, or in Terminal:
+   ```bash
+   xattr -dr com.apple.quarantine "/Applications/PermissionPilot Demo.app"
+   ```
 
 > [!NOTE]
 > For your *own* app, sign with a stable identity (Developer ID + notarization for
