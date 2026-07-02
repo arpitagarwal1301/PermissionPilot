@@ -281,6 +281,48 @@ final class PermissionPilotTests: XCTestCase {
         }
     }
 
+    // MARK: Relauncher decisions (pure — regression tests for the sandbox-safe relaunch)
+
+    func testSandboxDecisionEntitlementIsAuthoritative() {
+        // Entitlement present → decide from it; the home path must be ignored.
+        XCTAssertTrue(Relauncher.sandboxDecision(entitlementValue: true, homePath: "/Users/x"))
+        XCTAssertFalse(Relauncher.sandboxDecision(
+            entitlementValue: false,
+            homePath: "/Users/x/Library/Containers/com.x.app/Data"))
+        // CFBoolean/NSNumber form, as actually returned by SecTaskCopyValueForEntitlement.
+        XCTAssertTrue(Relauncher.sandboxDecision(entitlementValue: NSNumber(value: true),
+                                                 homePath: "/Users/x"))
+        XCTAssertFalse(Relauncher.sandboxDecision(entitlementValue: NSNumber(value: false),
+                                                  homePath: "/Users/x"))
+    }
+
+    func testSandboxDecisionFallsBackToContainerHome() {
+        // Signature unreadable (nil) → container-home heuristic.
+        XCTAssertTrue(Relauncher.sandboxDecision(
+            entitlementValue: nil,
+            homePath: "/Users/x/Library/Containers/com.x.app/Data"))
+        XCTAssertFalse(Relauncher.sandboxDecision(entitlementValue: nil, homePath: "/Users/x"))
+    }
+
+    func testMultipleInstancesProhibitedPlistForms() {
+        // Launch Services honors Bool and string forms.
+        XCTAssertTrue(Relauncher.prohibitsMultipleInstances(true))
+        XCTAssertTrue(Relauncher.prohibitsMultipleInstances("YES"))
+        XCTAssertTrue(Relauncher.prohibitsMultipleInstances("true"))
+        XCTAssertFalse(Relauncher.prohibitsMultipleInstances(false))
+        XCTAssertFalse(Relauncher.prohibitsMultipleInstances("NO"))
+        XCTAssertFalse(Relauncher.prohibitsMultipleInstances("false"))
+        XCTAssertFalse(Relauncher.prohibitsMultipleInstances(nil))
+    }
+
+    func testRelaunchPossibleMatrix() {
+        // Only sandboxed + LSMultipleInstancesProhibited has no relaunch path.
+        XCTAssertTrue(Relauncher.relaunchPossible(sandboxed: false, multipleInstancesProhibited: false))
+        XCTAssertTrue(Relauncher.relaunchPossible(sandboxed: false, multipleInstancesProhibited: true))  // shell helper
+        XCTAssertTrue(Relauncher.relaunchPossible(sandboxed: true, multipleInstancesProhibited: false))  // LaunchServices
+        XCTAssertFalse(Relauncher.relaunchPossible(sandboxed: true, multipleInstancesProhibited: true))  // stay running
+    }
+
     // MARK: Manager
 
     @MainActor

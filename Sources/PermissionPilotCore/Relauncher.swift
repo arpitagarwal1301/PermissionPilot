@@ -48,7 +48,13 @@ enum Relauncher {
     /// second live instance) is closed too. UI should offer manual-restart
     /// guidance instead of a dead "Quit & Reopen" control.
     static var canRelaunch: Bool {
-        !(isSandboxed && multipleInstancesProhibited)
+        relaunchPossible(sandboxed: isSandboxed,
+                         multipleInstancesProhibited: multipleInstancesProhibited)
+    }
+
+    /// Pure decision behind ``canRelaunch`` — unit-tested.
+    static func relaunchPossible(sandboxed: Bool, multipleInstancesProhibited: Bool) -> Bool {
+        !(sandboxed && multipleInstancesProhibited)
     }
 
     /// The App Sandbox forbids spawning `/bin/sh`, so hand the launch to
@@ -87,13 +93,19 @@ enum Relauncher {
     /// Xcode-built app), and misdetecting sends a sandboxed app down the
     /// shell-helper path — which quits without ever relaunching.
     private static var isSandboxed: Bool {
-        if let task = SecTaskCreateFromSelf(nil),
-           let value = SecTaskCopyValueForEntitlement(
-               task, "com.apple.security.app-sandbox" as CFString, nil) {
-            return (value as? Bool) == true
+        let entitlement: Any? = SecTaskCreateFromSelf(nil).flatMap {
+            SecTaskCopyValueForEntitlement($0, "com.apple.security.app-sandbox" as CFString, nil)
         }
+        return sandboxDecision(entitlementValue: entitlement, homePath: NSHomeDirectory())
+    }
+
+    /// Pure decision behind ``isSandboxed`` — unit-tested by injecting the
+    /// entitlement value. A present entitlement is authoritative; only when the
+    /// signature can't be read (nil) does the container-home heuristic apply.
+    static func sandboxDecision(entitlementValue: Any?, homePath: String) -> Bool {
+        if let value = entitlementValue { return (value as? Bool) == true }
         // Fallback heuristic: a sandboxed GUI app's home is its container.
-        return NSHomeDirectory().contains("/Library/Containers/")
+        return homePath.contains("/Library/Containers/")
     }
 
     private static let log = Logger(subsystem: "PermissionPilot", category: "relaunch")
@@ -101,7 +113,13 @@ enum Relauncher {
     /// Launch Services honors both boolean and string ("YES"/"true") plist
     /// values for its LS* keys, so read this one the same way.
     private static var multipleInstancesProhibited: Bool {
-        switch Bundle.main.object(forInfoDictionaryKey: "LSMultipleInstancesProhibited") {
+        prohibitsMultipleInstances(
+            Bundle.main.object(forInfoDictionaryKey: "LSMultipleInstancesProhibited"))
+    }
+
+    /// Pure plist-form parsing behind ``multipleInstancesProhibited`` — unit-tested.
+    static func prohibitsMultipleInstances(_ plistValue: Any?) -> Bool {
+        switch plistValue {
         case let flag as Bool:   flag
         case let text as String: (text as NSString).boolValue
         default:                 false
