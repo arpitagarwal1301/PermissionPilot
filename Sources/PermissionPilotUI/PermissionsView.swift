@@ -157,8 +157,13 @@ public struct PermissionsView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: PPDesign.s12)
-            Button(ppLocalized("relaunch.button")) { manager.quitAndReopen() }
-                .controlSize(.small)
+            // When the host can't relaunch itself (sandboxed +
+            // LSMultipleInstancesProhibited) show no button — the banner text
+            // already tells the user to quit and reopen, which they do manually.
+            if manager.relaunchAvailable {
+                Button(ppLocalized("relaunch.button")) { manager.quitAndReopen() }
+                    .controlSize(.small)
+            }
         }
         .padding(.horizontal, PPDesign.s12)
         .padding(.vertical, PPDesign.s8)

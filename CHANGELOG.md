@@ -26,7 +26,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **CI** — GitHub Actions builds and tests on macOS for every push and PR.
 - `CHANGELOG.md` and `CONTRIBUTING.md`.
 
+### Added (hosting API)
+- `OnboardingPresenter.front()` — deminiaturizes and re-fronts an already-presented
+  wizard. Hosts that keep a weak presenter reference should call this instead of
+  `NSApp.activate`, which neither deminiaturizes nor reorders an existing window.
+- `PermissionManager.relaunchAvailable` — false when the host has no way to
+  relaunch itself (sandboxed + `LSMultipleInstancesProhibited`). The
+  `PermissionsView` relaunch banner now hides its "Quit & Reopen" button in that
+  case (the banner copy already instructs a manual quit-and-reopen), instead of
+  rendering a button that silently does nothing.
+
 ### Fixed
+- **Sandbox-safe relaunch.** `PermissionManager.quitAndReopen()` previously spawned
+  a detached `/bin/sh` helper, which the App Sandbox forbids — in a sandboxed app
+  the relaunch never happened and the app just quit. Sandboxed apps now relaunch
+  via LaunchServices (`NSWorkspace.openApplication` with
+  `createsNewApplicationInstance`), terminating only once the new instance is
+  underway. Sandboxed apps marked `LSMultipleInstancesProhibited` (which refuse a
+  second live instance) stay running instead of quitting into nothing; the grant
+  applies on the next manual restart. Non-sandboxed behavior is unchanged.
 - **Docs:** corrected the App Sandbox guidance. The engine/detection work
   sandboxed, and the standard privacy permissions are usable with the matching
   entitlements; only Accessibility, Input Monitoring, Full Disk Access, and

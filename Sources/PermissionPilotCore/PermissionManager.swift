@@ -193,8 +193,19 @@ public final class PermissionManager: ObservableObject {
 
     /// Relaunches the app so freshly-granted permissions (Input Monitoring,
     /// pre-Sequoia Screen Recording) take effect, then terminates this instance.
+    /// No-op when ``relaunchAvailable`` is false — check it first and offer
+    /// manual-restart guidance instead.
     public func quitAndReopen() {
         Relauncher.relaunch()
+    }
+
+    /// Whether ``quitAndReopen()`` can actually restart this app. False for
+    /// sandboxed hosts that prohibit multiple instances (the sandbox forbids
+    /// the shell-helper relaunch, and `LSMultipleInstancesProhibited` closes
+    /// the LaunchServices path) — there, show "quit and reopen manually" copy
+    /// instead of a relaunch button.
+    public var relaunchAvailable: Bool {
+        Relauncher.canRelaunch
     }
 
     // MARK: Monitoring

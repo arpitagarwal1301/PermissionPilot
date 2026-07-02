@@ -61,6 +61,18 @@ public final class OnboardingPresenter: NSObject, NSWindowDelegate {
         callback?()
     }
 
+    /// Brings an already-presented wizard back to the user: deminiaturizes,
+    /// re-fronts, and activates the app. No-op once the window has closed.
+    /// Hosts that keep a (weak) reference should call this instead of
+    /// re-presenting — `NSApp.activate` alone neither deminiaturizes nor
+    /// reorders an existing window.
+    public func front() {
+        guard let window else { return }
+        if window.isMiniaturized { window.deminiaturize(nil) }
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     /// Closes the wizard window and releases the presenter.
     public func close() {
         window?.delegate = nil

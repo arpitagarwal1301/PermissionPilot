@@ -64,6 +64,12 @@ in three:
 > sandboxed, verify the real capability under your entitlements — an actual
 > `AXUIElement` call, a live `CGEventTap`, a returned capture frame — not just the
 > preflight check.
+
+`quitAndReopen()` is sandbox-aware: sandboxed apps can't spawn the detached
+shell helper, so there the relaunch goes through LaunchServices
+(`NSWorkspace.openApplication`, `createsNewApplicationInstance`) instead —
+except for apps marked `LSMultipleInstancesProhibited`, which stay running and
+pick up the grant on the next manual restart.
 </details>
 
 ## Install
