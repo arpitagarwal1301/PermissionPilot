@@ -1,3 +1,13 @@
+<p align="center"><sub><b>IN THE WILD</b> — real apps shipping on PermissionPilot are the whole reward:</sub></p>
+<p align="center">
+  <a href="https://github.com/arpitagarwal1301/wardlume"><img src="docs/wardlume-icon.png" width="48" alt="Wardlume app icon"></a>
+  <br>
+  <a href="https://github.com/arpitagarwal1301/wardlume"><b>Wardlume</b></a>
+  <br>
+  <sub>Lock your Mac so people can watch your AI agents work — but can't touch it.<br>
+  Sandboxed menu-bar app · its entire permission flow runs on PermissionPilot · <a href="https://github.com/arpitagarwal1301/PermissionPilot/pulls">add your app →</a></sub>
+</p>
+
 <p align="center">
   <img src="docs/hero.svg" alt="PermissionPilot — drop-in SwiftUI onboarding + permissions for macOS apps" width="100%">
 </p>
@@ -10,16 +20,6 @@
   <img src="https://img.shields.io/badge/Swift-5.9+-orange.svg?style=flat-square" alt="Swift 5.9+">
   <img src="https://img.shields.io/badge/SPM-compatible-brightgreen.svg?style=flat-square" alt="SPM compatible">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
-</p>
-
-<p align="center"><sub><b>IN THE WILD</b> — real apps shipping on PermissionPilot are the whole reward:</sub></p>
-<p align="center">
-  <a href="https://github.com/arpitagarwal1301/wardlume"><img src="docs/wardlume-icon.png" width="48" alt="Wardlume app icon"></a>
-  <br>
-  <a href="https://github.com/arpitagarwal1301/wardlume"><b>Wardlume</b></a>
-  <br>
-  <sub>Lock your Mac so people can watch your AI agents work — but can't touch it.<br>
-  Sandboxed menu-bar app · its entire permission flow runs on PermissionPilot · <a href="https://github.com/arpitagarwal1301/PermissionPilot/pulls">add your app →</a></sub>
 </p>
 
 **Drop-in SwiftUI onboarding + permissions flow for non–App Store macOS apps.**
