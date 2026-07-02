@@ -6,7 +6,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-02
+
+First release hardened by a real sandboxed consumer (integration-tested inside a
+sandboxed menu-bar app).
+
 ### Added
+- `OnboardingPresenter.front()` — deminiaturizes and re-fronts an already-presented
+  wizard. Hosts that keep a weak presenter reference should call this instead of
+  `NSApp.activate`, which neither deminiaturizes nor reorders an existing window.
+- `PermissionManager.relaunchAvailable` — false when the host has no way to
+  relaunch itself (sandboxed + `LSMultipleInstancesProhibited`). The
+  `PermissionsView` relaunch banner now hides its "Quit & Reopen" button in that
+  case (the banner copy already instructs a manual quit-and-reopen), instead of
+  rendering a button that silently does nothing.
 - **README visuals** — an animated light/dark wizard-flow GIF (shown side by
   side) and a theme-aware 16-permission board grid. `SnapshotMode` now renders
   the board in both themes for regenerable assets.
@@ -25,16 +38,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   contribute a language). See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **CI** — GitHub Actions builds and tests on macOS for every push and PR.
 - `CHANGELOG.md` and `CONTRIBUTING.md`.
-
-### Added (hosting API)
-- `OnboardingPresenter.front()` — deminiaturizes and re-fronts an already-presented
-  wizard. Hosts that keep a weak presenter reference should call this instead of
-  `NSApp.activate`, which neither deminiaturizes nor reorders an existing window.
-- `PermissionManager.relaunchAvailable` — false when the host has no way to
-  relaunch itself (sandboxed + `LSMultipleInstancesProhibited`). The
-  `PermissionsView` relaunch banner now hides its "Quit & Reopen" button in that
-  case (the banner copy already instructs a manual quit-and-reopen), instead of
-  rendering a button that silently does nothing.
+- Regression tests for the relaunch decisions (sandbox detection via injected
+  entitlement value, `LSMultipleInstancesProhibited` plist forms, the
+  can-relaunch matrix).
 
 ### Fixed
 - **"Open the … list" always opens the pane.** The manual-add walkthrough's
@@ -90,5 +96,6 @@ Initial release.
 - Three composable products (`PermissionPilotCore`, `PermissionPilotUI`,
   `PermissionPilot`); **zero third-party dependencies**.
 
-[Unreleased]: https://github.com/arpitagarwal1301/PermissionPilot/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/arpitagarwal1301/PermissionPilot/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/arpitagarwal1301/PermissionPilot/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/arpitagarwal1301/PermissionPilot/releases/tag/v0.1.0

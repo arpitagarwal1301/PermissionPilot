@@ -77,7 +77,7 @@ pick up the grant on the next manual restart.
 Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/arpitagarwal1301/PermissionPilot.git", from: "0.1.0")
+.package(url: "https://github.com/arpitagarwal1301/PermissionPilot.git", from: "0.2.0")
 ```
 
 Depend on **`PermissionPilot`** for the full wizard (it re-exports the other two).

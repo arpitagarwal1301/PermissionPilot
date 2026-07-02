@@ -17,5 +17,5 @@ import Foundation
 /// Namespace + version marker for PermissionPilot.
 public enum PermissionPilotCore {
     /// Semantic version of the SDK.
-    public static let version = "0.1.0"
+    public static let version = "0.2.0"
 }
