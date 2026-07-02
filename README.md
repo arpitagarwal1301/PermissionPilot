@@ -70,6 +70,10 @@ shell helper, so there the relaunch goes through LaunchServices
 (`NSWorkspace.openApplication`, `createsNewApplicationInstance`) instead —
 except for apps marked `LSMultipleInstancesProhibited`, which stay running and
 pick up the grant on the next manual restart.
+
+None of this is theoretical: [Wardlume](https://github.com/arpitagarwal1301/wardlume),
+a sandboxed menu-bar app, ships its permission flow on PermissionPilot — its
+integration testing is what hardened the sandbox-safe relaunch in v0.2.0.
 </details>
 
 ## Install
@@ -240,6 +244,16 @@ Builds, signs (with your local identity), and launches the demo as its own `.app
 **Don't** test permissions with `swift run PermissionPilotDemo`: an unbundled,
 unsigned binary is attributed to the **responsible parent process** (your
 terminal), so System Settings shows the wrong app and toggles never stick.
+
+## Used in production
+
+- [**Wardlume**](https://github.com/arpitagarwal1301/wardlume) — lock your Mac so
+  people can watch your AI agents work, but can't touch it. A sandboxed menu-bar
+  app by PermissionPilot's author: its entire permission onboarding (Screen
+  Recording, Accessibility, Input Monitoring) runs on PermissionPilot — the
+  dogfooding that keeps the sandbox path honest.
+
+*Shipping with PermissionPilot? [Open a PR](https://github.com/arpitagarwal1301/PermissionPilot/pulls) to add your app here.*
 
 ## License & credits
 
