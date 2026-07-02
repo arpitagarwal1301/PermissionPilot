@@ -14,7 +14,7 @@
 
 <p align="center"><sub><b>IN THE WILD</b> — real apps shipping on PermissionPilot are the whole reward:</sub></p>
 <p align="center">
-  <a href="https://github.com/arpitagarwal1301/wardlume"><img src="https://raw.githubusercontent.com/arpitagarwal1301/wardlume/main/Wardlume/Assets.xcassets/AppIcon.appiconset/icon_128.png" width="48" alt="Wardlume app icon"></a>
+  <a href="https://github.com/arpitagarwal1301/wardlume"><img src="docs/wardlume-icon.png" width="48" alt="Wardlume app icon"></a>
   <br>
   <a href="https://github.com/arpitagarwal1301/wardlume"><b>Wardlume</b></a>
   <br>
