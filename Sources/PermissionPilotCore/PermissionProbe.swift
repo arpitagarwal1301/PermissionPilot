@@ -121,9 +121,13 @@ enum PermissionProbe {
 
         switch permission {
         case .accessibility:
+            // The AX prompt only fires on the FIRST call per app; afterward it's
+            // silent — so, like Screen Recording below, also open the pane so a
+            // request always leads somewhere visible.
             let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
             let options = [key: true] as CFDictionary
-            _ = AXIsProcessTrustedWithOptions(options)
+            let trusted = AXIsProcessTrustedWithOptions(options)
+            if !trusted { SystemSettingsLink.open(.accessibility) }
             completion(accessibilityStatus())
 
         case .screenRecording:

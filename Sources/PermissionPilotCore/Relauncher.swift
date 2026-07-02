@@ -54,6 +54,7 @@ enum Relauncher {
         guard canRelaunch else { return }
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.createsNewApplicationInstance = true
+        configuration.activates = true   // hand focus to the new instance
         NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, error in
             DispatchQueue.main.async {
                 // Only quit once the relaunch is underway; on failure, stay

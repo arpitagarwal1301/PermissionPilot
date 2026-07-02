@@ -98,7 +98,10 @@ public struct DragToAuthorizeView: View {
     @ViewBuilder
     private var manualAddSteps: some View {
         stepRow(1, ppFormat("drag.step.openList", permissionTitle)) {
-            Button(ppLocalized("action.openSettings")) { manager.request(permission) }
+            // "Open the <permission> list" must ALWAYS open the pane. request()
+            // is wrong here: for Accessibility it maps to the AX prompt, which
+            // macOS shows only once per app — every later click was a silent no-op.
+            Button(ppLocalized("action.openSettings")) { manager.openSettings(for: permission) }
                 .buttonStyle(.borderedProminent)
                 .applyingPermissionPilotTint(tint)
         }

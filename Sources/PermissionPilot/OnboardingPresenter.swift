@@ -51,6 +51,10 @@ public final class OnboardingPresenter: NSObject, NSWindowDelegate {
         window.delegate = self
         window.center()
         window.makeKeyAndOrderFront(nil)
+        // Cooperative activation (macOS 14+) can deny activate() — e.g. right
+        // after a quit-and-reopen handoff, when the requesting instance has
+        // already exited. orderFrontRegardless() shows the wizard even then.
+        window.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
     }

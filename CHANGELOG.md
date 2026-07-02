@@ -37,6 +37,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   rendering a button that silently does nothing.
 
 ### Fixed
+- **"Open the … list" always opens the pane.** The manual-add walkthrough's
+  step-1 button called `request()`, which for Accessibility maps to the AX
+  prompt — shown by macOS only once per app, so every later click was a silent
+  no-op. The button now deep-links to the pane; the Accessibility *request*
+  path also falls back to opening the pane when the one-shot prompt is spent
+  (mirroring the Screen Recording behavior).
+- **Wizard visible after relaunch.** The onboarding window now calls
+  `orderFrontRegardless()` — cooperative activation (macOS 14+) can deny
+  activation right after a quit-and-reopen handoff, which could leave the
+  relaunched wizard buried.
 - **Sandbox-safe relaunch.** `PermissionManager.quitAndReopen()` previously spawned
   a detached `/bin/sh` helper, which the App Sandbox forbids — in a sandboxed app
   the relaunch never happened and the app just quit. Sandboxed apps now relaunch
