@@ -55,6 +55,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   underway. Sandboxed apps marked `LSMultipleInstancesProhibited` (which refuse a
   second live instance) stay running instead of quitting into nothing; the grant
   applies on the next manual restart. Non-sandboxed behavior is unchanged.
+  Sandbox detection reads the `com.apple.security.app-sandbox` entitlement from
+  the process's own code signature (`SecTaskCopyValueForEntitlement`) — the
+  `APP_SANDBOX_CONTAINER_ID` environment variable is not reliably present, and
+  misdetecting sent sandboxed apps down the shell path (quit, no relaunch).
+  All relaunch paths now log to os.log (subsystem `PermissionPilot`, category
+  `relaunch`) so a failed relaunch is diagnosable via `log show`.
 - **Docs:** corrected the App Sandbox guidance. The engine/detection work
   sandboxed, and the standard privacy permissions are usable with the matching
   entitlements; only Accessibility, Input Monitoring, Full Disk Access, and

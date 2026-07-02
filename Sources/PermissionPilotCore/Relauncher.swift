@@ -1,5 +1,7 @@
 import Foundation
 import AppKit
+import Security
+import os.log
 
 /// Quits and reopens the current app.
 ///
@@ -27,10 +29,16 @@ enum Relauncher {
         // reopens the app. We can't use NSWorkspace's `createsNewApplicationInstance`
         // because apps marked `LSMultipleInstancesProhibited` refuse a second
         // instance — it would terminate without ever relaunching.
+        log.info("relaunching via detached shell helper (non-sandboxed): \(url.path, privacy: .public)")
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
         process.arguments = ["-c", "sleep 1; /usr/bin/open \"\(url.path)\""]
-        try? process.run()
+        do {
+            try process.run()
+        } catch {
+            log.error("shell helper failed to spawn: \(error, privacy: .public) — staying running")
+            return
+        }
         NSApp.terminate(nil)
     }
 
@@ -51,7 +59,11 @@ enum Relauncher {
     /// next manual restart.
     @MainActor
     private static func relaunchBundleSandboxed(at url: URL) {
-        guard canRelaunch else { return }
+        guard canRelaunch else {
+            log.error("relaunch unavailable (sandboxed + LSMultipleInstancesProhibited) — staying running")
+            return
+        }
+        log.info("relaunching via LaunchServices (sandboxed): \(url.path, privacy: .public)")
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.createsNewApplicationInstance = true
         configuration.activates = true   // hand focus to the new instance
@@ -59,14 +71,32 @@ enum Relauncher {
             DispatchQueue.main.async {
                 // Only quit once the relaunch is underway; on failure, stay
                 // running rather than strand the user with no app at all.
-                if error == nil { NSApp.terminate(nil) }
+                if let error {
+                    log.error("LaunchServices relaunch failed: \(error, privacy: .public) — staying running")
+                } else {
+                    log.info("new instance underway — terminating this one")
+                    NSApp.terminate(nil)
+                }
             }
         }
     }
 
+    /// Sandbox detection must read the entitlement from our own code
+    /// signature: the `APP_SANDBOX_CONTAINER_ID` environment variable is NOT
+    /// reliably present in sandboxed processes (observed absent in a sandboxed
+    /// Xcode-built app), and misdetecting sends a sandboxed app down the
+    /// shell-helper path — which quits without ever relaunching.
     private static var isSandboxed: Bool {
-        ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+        if let task = SecTaskCreateFromSelf(nil),
+           let value = SecTaskCopyValueForEntitlement(
+               task, "com.apple.security.app-sandbox" as CFString, nil) {
+            return (value as? Bool) == true
+        }
+        // Fallback heuristic: a sandboxed GUI app's home is its container.
+        return NSHomeDirectory().contains("/Library/Containers/")
     }
+
+    private static let log = Logger(subsystem: "PermissionPilot", category: "relaunch")
 
     /// Launch Services honors both boolean and string ("YES"/"true") plist
     /// values for its LS* keys, so read this one the same way.
