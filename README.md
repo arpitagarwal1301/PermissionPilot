@@ -12,6 +12,16 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
 </p>
 
+<p align="center"><sub><b>IN THE WILD</b> — real apps shipping on PermissionPilot are the whole reward:</sub></p>
+<p align="center">
+  <a href="https://github.com/arpitagarwal1301/wardlume"><img src="https://raw.githubusercontent.com/arpitagarwal1301/wardlume/main/Wardlume/Assets.xcassets/AppIcon.appiconset/icon_128.png" width="48" alt="Wardlume app icon"></a>
+  <br>
+  <a href="https://github.com/arpitagarwal1301/wardlume"><b>Wardlume</b></a>
+  <br>
+  <sub>Lock your Mac so people can watch your AI agents work — but can't touch it.<br>
+  Sandboxed menu-bar app · its entire permission flow runs on PermissionPilot · <a href="https://github.com/arpitagarwal1301/PermissionPilot/pulls">add your app →</a></sub>
+</p>
+
 **Drop-in SwiftUI onboarding + permissions flow for non–App Store macOS apps.**
 Detects, prompts, deep-links, and onboards across **16 macOS permissions** —
 **zero dependencies**, Apple frameworks only.
@@ -244,16 +254,6 @@ Builds, signs (with your local identity), and launches the demo as its own `.app
 **Don't** test permissions with `swift run PermissionPilotDemo`: an unbundled,
 unsigned binary is attributed to the **responsible parent process** (your
 terminal), so System Settings shows the wrong app and toggles never stick.
-
-## Used in production
-
-- [**Wardlume**](https://github.com/arpitagarwal1301/wardlume) — lock your Mac so
-  people can watch your AI agents work, but can't touch it. A sandboxed menu-bar
-  app by PermissionPilot's author: its entire permission onboarding (Screen
-  Recording, Accessibility, Input Monitoring) runs on PermissionPilot — the
-  dogfooding that keeps the sandbox path honest.
-
-*Shipping with PermissionPilot? [Open a PR](https://github.com/arpitagarwal1301/PermissionPilot/pulls) to add your app here.*
 
 ## License & credits
 
