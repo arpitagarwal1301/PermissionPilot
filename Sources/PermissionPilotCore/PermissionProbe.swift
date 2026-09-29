@@ -103,8 +103,17 @@ enum PermissionProbe {
     /// - Screen Recording / Input Monitoring add the app and may prompt; the grant
     ///   often only applies after relaunch.
     /// - Full Disk Access / Automation / Local Network have no prompt — we deep-link.
+    ///
+    /// For Accessibility / Screen Recording / Input Monitoring the pane is opened
+    /// only when macOS doesn't show its own first-time prompt — see
+    /// ``SystemPromptWatch``. `promptEvents` reports that prompt appearing
+    /// (`true`) and going away (`false`).
     @MainActor
-    static func request(_ permission: Permission, completion: @escaping (PermissionStatus) -> Void) {
+    static func request(
+        _ permission: Permission,
+        promptEvents: @escaping (Bool) -> Void = { _ in },
+        completion: @escaping (PermissionStatus) -> Void
+    ) {
         guard permission.isImplemented else { completion(.unknown); return }
 
         // Deep-link-only tier (Full Disk Access, Automation, Local Network): macOS
@@ -119,30 +128,40 @@ enum PermissionProbe {
         // host. Fail gracefully instead of crashing the app.
         guard ensureUsageDescription(for: permission, completion: completion) else { return }
 
+        // Accessibility / Screen Recording / Input Monitoring: the request adds
+        // the app to the list (switched off). Only the FIRST call per app shows
+        // macOS' own prompt, whose "Open System Settings" opens the pane and
+        // dismisses it; later calls are silent. So open the pane ourselves
+        // unless that prompt appears — opening it on top of the prompt strands
+        // the prompt on screen after the user grants access.
+        func openPaneUnlessPrompted(_ granted: Bool, baseline: Set<CGWindowID>) {
+            guard !granted else { return }
+            SystemPromptWatch.openPaneUnlessPrompted(
+                permission, baseline: baseline,
+                onPrompt: { promptEvents(true) },
+                onPromptGone: { promptEvents(false) })
+        }
+
         switch permission {
         case .accessibility:
-            // The AX prompt only fires on the FIRST call per app; afterward it's
-            // silent — so, like Screen Recording below, also open the pane so a
-            // request always leads somewhere visible.
+            let baseline = SystemPromptWatch.baseline()
             let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
             let options = [key: true] as CFDictionary
             let trusted = AXIsProcessTrustedWithOptions(options)
-            if !trusted { SystemSettingsLink.open(.accessibility) }
+            openPaneUnlessPrompted(trusted, baseline: baseline)
             completion(accessibilityStatus())
 
         case .screenRecording:
-            // First call prompts + adds the app; afterward it's silent — so also
-            // open the pane, ensuring "Enable" always leads somewhere visible.
+            let baseline = SystemPromptWatch.baseline()
             let granted = CGRequestScreenCaptureAccess()
-            if !granted { SystemSettingsLink.open(.screenRecording) }
+            openPaneUnlessPrompted(granted, baseline: baseline)
             completion(granted ? .granted : screenRecordingStatus())
 
         case .inputMonitoring:
-            // Registers the app (and prompts the first time), but the grant only
-            // applies after relaunch and later calls are silent — open the pane so
-            // the toggle is obvious.
+            // The grant only applies after relaunch (see mayRequireRelaunch).
+            let baseline = SystemPromptWatch.baseline()
             let granted = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
-            if !granted { SystemSettingsLink.open(.inputMonitoring) }
+            openPaneUnlessPrompted(granted, baseline: baseline)
             completion(granted ? .granted : inputMonitoringStatus())
 
         case .camera:            requestMedia(.camera, .video, completion: completion)

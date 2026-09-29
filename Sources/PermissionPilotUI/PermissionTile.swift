@@ -108,8 +108,15 @@ public struct PermissionTile: View {
     }
 
     private func enable() {
-        // Always open the helper popover — it adapts per permission type.
-        showsDragHelp = true
+        // Manual-add panes: add the app to the list + open it, and show the
+        // shared floating helper. Others: the adaptive popover.
+        if permission.supportsManualAdd {
+            manager.request(permission)
+            ManualAddHelper.show(manager: manager, permission: permission,
+                                 tint: tint, colorScheme: scheme)
+        } else {
+            showsDragHelp = true
+        }
     }
 
     private var stateText: String {

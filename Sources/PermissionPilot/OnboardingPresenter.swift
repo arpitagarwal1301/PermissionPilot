@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import PermissionPilotCore
+import PermissionPilotUI
 
 /// Presents ``OnboardingView`` in a real, titled `NSWindow` — so the OS provides
 /// genuine window chrome (traffic lights), not a drawn imitation.
@@ -79,6 +80,7 @@ public final class OnboardingPresenter: NSObject, NSWindowDelegate {
 
     /// Closes the wizard window and releases the presenter.
     public func close() {
+        ManualAddHelper.close()
         window?.delegate = nil
         window?.close()
         window = nil
@@ -90,6 +92,7 @@ public final class OnboardingPresenter: NSObject, NSWindowDelegate {
     // MARK: NSWindowDelegate
 
     public func windowWillClose(_ notification: Notification) {
+        ManualAddHelper.close()
         window = nil
         if OnboardingPresenter.active === self {
             OnboardingPresenter.active = nil

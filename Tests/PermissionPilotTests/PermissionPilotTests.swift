@@ -8,6 +8,7 @@ import Speech
 import CoreBluetooth
 import UserNotifications
 @testable import PermissionPilotCore
+@testable import PermissionPilotUI
 @testable import PermissionPilot
 
 // NOTE: Live detection/request paths touch the real TCC database and require a
@@ -321,6 +322,80 @@ final class PermissionPilotTests: XCTestCase {
         XCTAssertTrue(Relauncher.relaunchPossible(sandboxed: false, multipleInstancesProhibited: true))  // shell helper
         XCTAssertTrue(Relauncher.relaunchPossible(sandboxed: true, multipleInstancesProhibited: false))  // LaunchServices
         XCTAssertFalse(Relauncher.relaunchPossible(sandboxed: true, multipleInstancesProhibited: true))  // stay running
+    }
+
+    // MARK: Manual-add helper (pure placement + Finder reuse decisions)
+
+    func testHelperDocksRightOfSettingsWhenItFits() {
+        let visible = CGRect(x: 0, y: 0, width: 1800, height: 1100)
+        let settings = CGRect(x: 400, y: 300, width: 700, height: 600)
+        let origin = ManualAddHelper.dockedOrigin(panel: CGSize(width: 420, height: 320),
+                                                  beside: settings, within: visible)
+        XCTAssertEqual(origin, CGPoint(x: 1112, y: 580)) // right edge + 12, top-aligned
+    }
+
+    func testHelperDocksLeftWhenRightSideIsFull() {
+        let visible = CGRect(x: 0, y: 0, width: 1600, height: 1000)
+        let settings = CGRect(x: 1000, y: 200, width: 580, height: 600)
+        let origin = ManualAddHelper.dockedOrigin(panel: CGSize(width: 420, height: 320),
+                                                  beside: settings, within: visible)
+        XCTAssertEqual(origin, CGPoint(x: 568, y: 480))
+    }
+
+    func testHelperOverlapsAndStaysOnScreenWhenNeitherSideFits() {
+        let visible = CGRect(x: 0, y: 25, width: 1000, height: 800)
+        let settings = CGRect(x: 100, y: 25, width: 850, height: 800) // top at visible.maxY
+        let panel = CGSize(width: 420, height: 320)
+        let origin = ManualAddHelper.dockedOrigin(panel: panel, beside: settings, within: visible)
+        XCTAssertEqual(origin.x, 1000 - 420 - 12)
+        XCTAssertEqual(origin.y, 825 - 320)
+        XCTAssertTrue(visible.contains(CGRect(origin: origin, size: panel)))
+    }
+
+    func testHelperClampsBelowAShortSettingsWindow() {
+        // Settings window near the bottom: top-aligning would push the panel off screen.
+        let visible = CGRect(x: 0, y: 0, width: 2000, height: 1000)
+        let settings = CGRect(x: 200, y: 0, width: 600, height: 200)
+        let origin = ManualAddHelper.dockedOrigin(panel: CGSize(width: 420, height: 320),
+                                                  beside: settings, within: visible)
+        XCTAssertEqual(origin.y, 0)
+    }
+
+    func testFinderRevealReusesOnlyWhileItsWindowIsOpen() {
+        XCTAssertFalse(FinderReveal.shouldRefront(tracked: [], onScreen: [1, 2]))  // never revealed
+        XCTAssertTrue(FinderReveal.shouldRefront(tracked: [7], onScreen: [3, 7]))  // still open
+        XCTAssertFalse(FinderReveal.shouldRefront(tracked: [7], onScreen: [3]))    // user closed it
+        XCTAssertFalse(FinderReveal.shouldRefront(tracked: [7], onScreen: []))     // Finder has no windows
+    }
+
+    func testRequestListsAppOnlyWhereMacOSCan() {
+        // Manual-add panes whose request API adds the app to the list — the
+        // helper tells the user to just flip the switch there.
+        for permission in [Permission.accessibility, .screenRecording, .inputMonitoring] {
+            XCTAssertTrue(permission.supportsManualAdd && permission.canPromptInApp, "\(permission)")
+        }
+        // Full Disk Access: manual-add, but no API — user must drag it in.
+        XCTAssertTrue(Permission.fullDiskAccess.supportsManualAdd)
+        XCTAssertFalse(Permission.fullDiskAccess.canPromptInApp)
+    }
+
+    func testSystemPromptDetection() {
+        typealias W = SystemPromptWatch.WindowSample
+        let me: pid_t = 100, settings: pid_t = 200, tcc: pid_t = 300
+        let baseline: Set<CGWindowID> = [1, 2]
+        func detect(_ current: [W]) -> Set<CGWindowID> {
+            SystemPromptWatch.promptWindows(baseline: baseline, current: current,
+                                            ownPID: me, excludedPIDs: [settings])
+        }
+        // A new, raised window from another process → the macOS prompt.
+        XCTAssertEqual(detect([W(id: 1, layer: 25, ownerPID: 50), W(id: 9, layer: 8, ownerPID: tcc)]), [9])
+        // Already on screen before the request (menu bar, Dock…) → ignored.
+        XCTAssertTrue(detect([W(id: 2, layer: 25, ownerPID: 50)]).isEmpty)
+        // System Settings opening, our own helper panel, normal-layer windows → ignored.
+        XCTAssertTrue(detect([W(id: 10, layer: 0, ownerPID: settings),
+                              W(id: 11, layer: 3, ownerPID: settings),
+                              W(id: 12, layer: 3, ownerPID: me),
+                              W(id: 13, layer: 0, ownerPID: tcc)]).isEmpty)
     }
 
     // MARK: Manager
