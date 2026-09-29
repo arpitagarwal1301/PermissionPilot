@@ -6,6 +6,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **macOS' Screen Recording / Input Monitoring prompt was still left on screen
+  (0.3.0).** The prompt detector only looked for windows *above* the normal
+  layer, but on macOS 27 the consent alert is a normal-layer window drawn by
+  `universalAccessAuthWarn`, so it was never seen and the pane opened under it.
+  Detection now matches the alert's owning process instead, which also stops
+  a Spaces switch (menu bars, other apps' windows) from being mistaken for a
+  prompt.
+- Screen Recording prompts on the first request of **every launch** until
+  granted, not just once per app; the detector now waits longer when a prompt
+  is likely (first request this launch; Input Monitoring still undecided).
+
 ## [0.3.0] - 2026-09-29
 
 ### Fixed

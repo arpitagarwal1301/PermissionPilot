@@ -381,21 +381,31 @@ final class PermissionPilotTests: XCTestCase {
 
     func testSystemPromptDetection() {
         typealias W = SystemPromptWatch.WindowSample
-        let me: pid_t = 100, settings: pid_t = 200, tcc: pid_t = 300
-        let baseline: Set<CGWindowID> = [1, 2]
+        let baseline: Set<CGWindowID> = [1, 2, 19679]
         func detect(_ current: [W]) -> Set<CGWindowID> {
-            SystemPromptWatch.promptWindows(baseline: baseline, current: current,
-                                            ownPID: me, excludedPIDs: [settings])
+            SystemPromptWatch.promptWindows(baseline: baseline, current: current)
         }
-        // A new, raised window from another process → the macOS prompt.
-        XCTAssertEqual(detect([W(id: 1, layer: 25, ownerPID: 50), W(id: 9, layer: 8, ownerPID: tcc)]), [9])
-        // Already on screen before the request (menu bar, Dock…) → ignored.
-        XCTAssertTrue(detect([W(id: 2, layer: 25, ownerPID: 50)]).isEmpty)
-        // System Settings opening, our own helper panel, normal-layer windows → ignored.
-        XCTAssertTrue(detect([W(id: 10, layer: 0, ownerPID: settings),
-                              W(id: 11, layer: 3, ownerPID: settings),
-                              W(id: 12, layer: 3, ownerPID: me),
-                              W(id: 13, layer: 0, ownerPID: tcc)]).isEmpty)
+        // The real TCC alert (macOS 27): a NORMAL-layer window from universalAccessAuthWarn.
+        // Missing it (0.3.0 only looked above layer 0) is what stranded the prompt.
+        XCTAssertEqual(detect([W(id: 9, layer: 0, ownerName: "universalAccessAuthWarn")]), [9])
+        XCTAssertEqual(detect([W(id: 9, layer: 0, ownerName: "UserNotificationCenter")]), [9])
+        // A prompt host window already on screen before the request → not a new prompt.
+        XCTAssertTrue(detect([W(id: 19679, layer: 0, ownerName: "universalAccessAuthWarn")]).isEmpty)
+        // A Spaces switch brings menu bars and other apps' windows on screen at
+        // once (seen live with ~29 windows) — none of them is a prompt.
+        XCTAssertTrue(detect([W(id: 17491, layer: 24, ownerName: "Window Server"),
+                              W(id: 17742, layer: 24, ownerName: "MenuBarAgent"),
+                              W(id: 15176, layer: 0, ownerName: "Google Chrome"),
+                              W(id: 10, layer: 0, ownerName: "System Settings"),
+                              W(id: 12, layer: 3, ownerName: "Wardlume")]).isEmpty)
+        // …and with the prompt among them, only the prompt is picked.
+        XCTAssertEqual(detect([W(id: 17491, layer: 24, ownerName: "Window Server"),
+                               W(id: 19680, layer: 0, ownerName: "universalAccessAuthWarn")]), [19680])
+    }
+
+    func testPromptWaitIsLongerWhenLikely() {
+        XCTAssertGreaterThan(SystemPromptWatch.detectWindow(promptLikely: true),
+                             SystemPromptWatch.detectWindow(promptLikely: false))
     }
 
     // MARK: Manager

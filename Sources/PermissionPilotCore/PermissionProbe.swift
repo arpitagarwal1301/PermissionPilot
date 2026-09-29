@@ -20,6 +20,10 @@ import Speech
 /// mappings live in `PermissionStatusMapping.swift`.
 enum PermissionProbe {
 
+    /// Permissions requested at least once in this process — macOS' consent
+    /// prompts are per-launch for some of them (see ``request(_:promptEvents:completion:)``).
+    @MainActor private static var requestedThisLaunch: Set<Permission> = []
+
     // MARK: Detect
 
     static func status(for permission: Permission) -> PermissionStatus {
@@ -129,39 +133,44 @@ enum PermissionProbe {
         guard ensureUsageDescription(for: permission, completion: completion) else { return }
 
         // Accessibility / Screen Recording / Input Monitoring: the request adds
-        // the app to the list (switched off). Only the FIRST call per app shows
-        // macOS' own prompt, whose "Open System Settings" opens the pane and
-        // dismisses it; later calls are silent. So open the pane ourselves
-        // unless that prompt appears — opening it on top of the prompt strands
-        // the prompt on screen after the user grants access.
-        func openPaneUnlessPrompted(_ granted: Bool, baseline: Set<CGWindowID>) {
+        // the app to the list (switched off) and may make macOS show its own
+        // prompt, whose "Open System Settings" opens the pane and dismisses it.
+        // So open the pane ourselves only if no prompt appears — opening it on
+        // top of the prompt strands the prompt after the user grants access.
+        func openPaneUnlessPrompted(_ granted: Bool, baseline: Set<CGWindowID>, promptLikely: Bool) {
             guard !granted else { return }
             SystemPromptWatch.openPaneUnlessPrompted(
-                permission, baseline: baseline,
+                permission, baseline: baseline, promptLikely: promptLikely,
                 onPrompt: { promptEvents(true) },
                 onPromptGone: { promptEvents(false) })
         }
+        let firstThisLaunch = requestedThisLaunch.insert(permission).inserted
 
         switch permission {
         case .accessibility:
+            // Prompts at most once per launch (and usually only once per app).
             let baseline = SystemPromptWatch.baseline()
             let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
             let options = [key: true] as CFDictionary
             let trusted = AXIsProcessTrustedWithOptions(options)
-            openPaneUnlessPrompted(trusted, baseline: baseline)
+            openPaneUnlessPrompted(trusted, baseline: baseline, promptLikely: firstThisLaunch)
             completion(accessibilityStatus())
 
         case .screenRecording:
+            // macOS 27 prompts on the first request of EVERY launch until
+            // granted (verified: 5 launches, 5 prompts); later calls are silent.
             let baseline = SystemPromptWatch.baseline()
             let granted = CGRequestScreenCaptureAccess()
-            openPaneUnlessPrompted(granted, baseline: baseline)
+            openPaneUnlessPrompted(granted, baseline: baseline, promptLikely: firstThisLaunch)
             completion(granted ? .granted : screenRecordingStatus())
 
         case .inputMonitoring:
-            // The grant only applies after relaunch (see mayRequireRelaunch).
+            // Prompts only while undecided. The grant applies after relaunch
+            // (see mayRequireRelaunch).
+            let undecided = inputMonitoringStatus() == .notDetermined
             let baseline = SystemPromptWatch.baseline()
             let granted = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
-            openPaneUnlessPrompted(granted, baseline: baseline)
+            openPaneUnlessPrompted(granted, baseline: baseline, promptLikely: undecided)
             completion(granted ? .granted : inputMonitoringStatus())
 
         case .camera:            requestMedia(.camera, .video, completion: completion)
