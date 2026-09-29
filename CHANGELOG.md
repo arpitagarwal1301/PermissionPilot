@@ -6,6 +6,45 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **Dragging the app icon into System Settings didn't work.** The helper's icon
+  used SwiftUI `.onDrag { NSItemProvider(contentsOf:) }`, which presents the
+  bundle as a *file promise* and allows only the copy operation — the privacy
+  lists refuse that. It's now an AppKit drag source that writes the bundle's
+  file URL with copy/link/generic, exactly like a Finder drag.
+- **The helper vanished right when it was needed.** It was a transient popover,
+  so it closed as soon as System Settings came forward; and every **Enable**
+  click opened another one.
+- **"Reveal in Finder" opened a new Finder window on every click.** It now brings
+  Finder forward while a window it opened is still on screen, and only reveals
+  afresh once that window is closed (no Automation permission needed).
+
+- **macOS' first-time prompt was left stranded on screen.** The first request
+  for Accessibility / Screen Recording / Input Monitoring shows a system alert
+  (Open System Settings / Deny); opening the pane at the same time left that
+  alert behind after the user granted access. Requests now watch briefly for
+  that prompt and, if it appears, leave the pane to its button (which also
+  dismisses it); the helper points the user at it. Later, silent requests still
+  open the pane.
+
+### Added
+- `PermissionManager.systemPromptShowing` — the permission whose macOS prompt
+  is currently on screen, if any.
+- `ManualAddHelper` — one shared, floating, non-activating panel for the
+  manual-add permissions (Accessibility, Screen Recording, Input Monitoring,
+  Full Disk Access). It stays above System Settings, docks beside its window,
+  switches content in place when another permission's **Enable** is clicked,
+  and confirms + closes itself once the permission is granted. `PermissionRow`
+  / `PermissionTile` use it automatically; hosts with their own UI can call
+  `ManualAddHelper.show(manager:permission:…)`. `OnboardingPresenter` closes it
+  with the wizard.
+
+### Changed
+- **Enable** on Accessibility, Screen Recording, and Input Monitoring now calls
+  `request(_:)` before showing the helper, which adds the app to the list
+  (switched off) and opens the pane — the user usually just flips the switch,
+  and dragging becomes the fallback. The helper's copy says so.
+
 ## [0.2.0] - 2026-07-02
 
 First release hardened by a real sandboxed consumer (integration-tested inside a

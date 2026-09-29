@@ -47,8 +47,18 @@
 "drag.footer.deepLink" = "%1$@ appears in the %2$@ list once it first uses this.";
 "drag.step.openList" = "Open the %@ list:";
 "drag.step.drag" = "Drag %@ in — or click + there and pick it:";
+"drag.subtitle.listed" = "%@ is added to the list for you — just switch it on.";
+"drag.step.switchOn" = "Switch %1$@ on in the %2$@ list:";
+"drag.step.dragFallback" = "Not in the list? Drag %@ in — or click + there and pick it:";
+"drag.systemPrompt" = "macOS is asking too — click “Open System Settings” in its prompt, then switch %@ on.";
+"drag.footer.listed" = "On but still not working (e.g. after an update)? Remove %@ with −, then add it again.";
 "drag.zone.label" = "↗ Drag me into the list";
 "drag.zone.help" = "Drag into the %@ list in System Settings";
 "drag.zone.a11y" = "%@ icon. Drag it into the System Settings list.";
 "drag.alreadyDenied" = "Already denied?";
 "drag.deepLink.hint" = "Then switch %1$@ on in the %2$@ list.";
+
+/* MARK: Manual-add helper panel */
+"helper.windowTitle" = "Set up %@";
+"helper.granted" = "%1$@ has %2$@ — you’re all set.";
+"helper.returnToApp" = "Back to %@";

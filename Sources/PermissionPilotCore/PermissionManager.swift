@@ -35,6 +35,11 @@ public final class PermissionManager: ObservableObject {
     /// Live status for every declared permission. Published for SwiftUI.
     @Published public private(set) var statuses: [Permission: PermissionStatus] = [:]
 
+    /// The permission whose first-time **macOS prompt** ("Open System Settings /
+    /// Deny") is on screen right now, if any. While it's up the pane is left to
+    /// that prompt's button — UI should point the user at it.
+    @Published public private(set) var systemPromptShowing: Permission?
+
     private let infoOverrides: [Permission: PermissionInfo]
     private let pollInterval: TimeInterval
     /// When `true`, statuses are fixed (preview/snapshot/test) and `refresh()`
@@ -176,7 +181,14 @@ public final class PermissionManager: ObservableObject {
     /// opens the System Settings deep-link — then refreshes status.
     public func request(_ permission: Permission) {
         guard !isStatic else { return }
-        PermissionProbe.request(permission) { [weak self] status in
+        PermissionProbe.request(permission, promptEvents: { [weak self] showing in
+            guard let self else { return }
+            if showing {
+                self.systemPromptShowing = permission
+            } else if self.systemPromptShowing == permission {
+                self.systemPromptShowing = nil
+            }
+        }) { [weak self] status in
             Task { @MainActor in
                 guard let self else { return }
                 self.statuses[permission] = status

@@ -6,8 +6,9 @@ import PermissionPilotCore
 ///
 /// It adapts to the permission:
 /// - **Manual-add panes** (Accessibility, Screen Recording, Input Monitoring,
-///   Full Disk Access): drag the app icon into the list, or use **+** — the app
-///   may not be listed yet.
+///   Full Disk Access): open the list — which also adds the app to it where
+///   macOS allows — then switch it on; drag the app icon in, or use **+**, if
+///   it isn't listed.
 /// - **Prompt-based** (Camera, Microphone): request access via the system prompt;
 ///   the app only appears in that list after it responds.
 ///
@@ -42,6 +43,11 @@ public struct DragToAuthorizeView: View {
 
     private var permissionTitle: String { manager.info(for: permission).title }
 
+    /// Manual-add panes whose request API also adds the app to the list
+    /// (switched off) — there the user normally just flips the switch, and
+    /// dragging is the fallback. Full Disk Access has no such API.
+    private var listedByRequest: Bool { permission.supportsManualAdd && permission.canPromptInApp }
+
     public var body: some View {
         VStack(alignment: .leading, spacing: PPDesign.s16) {
             VStack(alignment: .leading, spacing: PPDesign.s4) {
@@ -74,7 +80,9 @@ public struct DragToAuthorizeView: View {
     }
 
     private var subtitle: String {
-        if permission.supportsManualAdd {
+        if listedByRequest {
+            return ppFormat("drag.subtitle.listed", appName)
+        } else if permission.supportsManualAdd {
             return ppFormat("drag.subtitle.manualAdd", appName)
         } else if permission.canPromptInApp {
             return ppLocalized("drag.subtitle.prompt")
@@ -84,7 +92,9 @@ public struct DragToAuthorizeView: View {
     }
 
     private var footerNote: String {
-        if permission.supportsManualAdd {
+        if listedByRequest {
+            return ppFormat("drag.footer.listed", appName)
+        } else if permission.supportsManualAdd {
             return ppLocalized("drag.footer.manualAdd")
         } else if permission.canPromptInApp {
             return ppFormat("drag.footer.prompt", appName, permissionTitle)
@@ -97,20 +107,37 @@ public struct DragToAuthorizeView: View {
 
     @ViewBuilder
     private var manualAddSteps: some View {
-        stepRow(1, ppFormat("drag.step.openList", permissionTitle)) {
-            // "Open the <permission> list" must ALWAYS open the pane. request()
-            // is wrong here: for Accessibility it maps to the AX prompt, which
-            // macOS shows only once per app — every later click was a silent no-op.
-            Button(ppLocalized("action.openSettings")) { manager.openSettings(for: permission) }
+        if manager.systemPromptShowing == permission {
+            // macOS' first-time prompt is up; its button opens the pane AND
+            // dismisses it — opening the pane from here would strand it.
+            Label(ppFormat("drag.systemPrompt", appName), systemImage: "hand.point.up.left.fill")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(PPDesign.s12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill((tint ?? .accentColor).opacity(0.14))
+                )
+        }
+        stepRow(1, listedByRequest
+                    ? ppFormat("drag.step.switchOn", appName, permissionTitle)
+                    : ppFormat("drag.step.openList", permissionTitle)) {
+            // request() registers the app in the list (Accessibility, Screen
+            // Recording, Input Monitoring) so the user only flips a switch, and
+            // opens the pane unless macOS' first-time prompt does it instead.
+            // For Full Disk Access it simply opens the pane. Disabled while that
+            // prompt is up: opening the pane from here would strand it.
+            Button(ppLocalized("action.openSettings")) { manager.request(permission) }
                 .buttonStyle(.borderedProminent)
                 .applyingPermissionPilotTint(tint)
+                .disabled(manager.systemPromptShowing == permission)
         }
-        stepRow(2, ppFormat("drag.step.drag", appName)) {
+        stepRow(2, ppFormat(listedByRequest ? "drag.step.dragFallback" : "drag.step.drag", appName)) {
             HStack(alignment: .center, spacing: PPDesign.s16) {
                 dragZone
-                Button(ppLocalized("action.revealInFinder")) {
-                    NSWorkspace.shared.activateFileViewerSelecting([appURL])
-                }
+                Button(ppLocalized("action.revealInFinder")) { FinderReveal.reveal(appURL) }
             }
         }
     }
@@ -180,14 +207,14 @@ public struct DragToAuthorizeView: View {
     }
 
     /// A prominent, obviously-draggable drop-zone: the app icon in a dashed box
-    /// with a "Drag me" cue, a grab cursor, and a gentle pulse (reduce-motion safe).
+    /// with a "Drag me" cue, a grab cursor (set by the drag source's cursor
+    /// rect), and a gentle pulse (reduce-motion safe).
     private var dragZone: some View {
         let accent = tint ?? .accentColor
         return VStack(spacing: PPDesign.s8) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: appURL.path))
-                .resizable()
+            // AppKit file drag, not SwiftUI .onDrag — see AppBundleDragSource.
+            AppBundleDragSource(appURL: appURL)
                 .frame(width: 58, height: 58)
-                .onDrag { NSItemProvider(contentsOf: appURL) ?? NSItemProvider() }
             Text(ppLocalized("drag.zone.label"))
                 .font(.caption.weight(.bold))
                 .foregroundStyle(accent)
@@ -204,9 +231,6 @@ public struct DragToAuthorizeView: View {
                 .opacity(pulse ? 0.95 : 0.5)
         )
         .shadow(color: accent.opacity(pulse ? 0.28 : 0), radius: pulse ? 7 : 0)
-        .onHover { inside in
-            if inside { NSCursor.openHand.push() } else { NSCursor.pop() }
-        }
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {

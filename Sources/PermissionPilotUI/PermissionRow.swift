@@ -61,7 +61,7 @@ public struct PermissionRow: View {
         // Combining children flattens the trailing Button away, so restore the
         // button trait + activation on the row itself for VoiceOver / keyboard.
         .accessibilityAddTraits(actionable ? .isButton : [])
-        .accessibilityAction { if actionable { manager.request(permission) } }
+        .accessibilityAction { if actionable { enable() } }
     }
 
     /// Whether the row offers a real "Enable" action (implemented + not granted).
@@ -109,17 +109,26 @@ public struct PermissionRow: View {
             .font(.subheadline)
             .foregroundStyle(PPColor.granted)
         } else {
-            // Permissions with no request API (Full Disk Access) can't be
-            // prompted — guide the user to add the app via drag-to-authorize.
-            // Always open the helper popover — it adapts: drag-to-authorize for
-            // manual-add panes, or a "request access" guide for Camera/Mic.
-            Button(ppLocalized("action.enable")) { showsDragHelp = true }
+            // Manual-add panes get the floating helper (see enable()); the
+            // rest get the adaptive popover — a "request access" guide for
+            // Camera/Mic, a deep-link guide for Automation/Local Network.
+            Button(ppLocalized("action.enable"), action: enable)
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
                 .applyingPermissionPilotTint(tint)
                 .popover(isPresented: $showsDragHelp, arrowEdge: .bottom) {
                     DragToAuthorizeView(manager: manager, permission: permission)
                 }
+        }
+    }
+
+    private func enable() {
+        if permission.supportsManualAdd {
+            manager.request(permission)
+            ManualAddHelper.show(manager: manager, permission: permission,
+                                 tint: tint, colorScheme: scheme)
+        } else {
+            showsDragHelp = true
         }
     }
 
