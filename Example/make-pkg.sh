@@ -42,7 +42,7 @@ rm -f "$PKG"
 pkgbuild --root "$STAGING" \
   --install-location /Applications \
   --identifier com.permissionpilot.demo.pkg \
-  --version 0.2.0 \
+  --version 0.3.0 \
   "$PKG" >/dev/null
 
 echo "✓ Built: $PKG"

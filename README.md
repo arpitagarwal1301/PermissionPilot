@@ -91,7 +91,7 @@ integration testing is what hardened the sandbox-safe relaunch in v0.2.0.
 Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/arpitagarwal1301/PermissionPilot.git", from: "0.2.0")
+.package(url: "https://github.com/arpitagarwal1301/PermissionPilot.git", from: "0.3.0")
 ```
 
 Depend on **`PermissionPilot`** for the full wizard (it re-exports the other two).
