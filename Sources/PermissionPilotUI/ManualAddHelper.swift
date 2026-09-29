@@ -192,12 +192,14 @@ public final class ManualAddHelper: NSObject, NSWindowDelegate {
         dockTimer?.invalidate()
         guard !userMovedPanel else { return }
         dockAttempts = 0
-        dockTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.dockTick() }
-        }
+        // Target/selector timer: fires on the main run loop, so no Sendable
+        // closure capturing self. The timer retains self only until it's
+        // invalidated (docked, 20 attempts, user move, or close).
+        dockTimer = Timer.scheduledTimer(timeInterval: 0.25, target: self,
+                                         selector: #selector(dockTick), userInfo: nil, repeats: true)
     }
 
-    private func dockTick() {
+    @objc private func dockTick() {
         dockAttempts += 1
         guard !userMovedPanel, dockAttempts <= 20 else { dockTimer?.invalidate(); return }
         guard let settings = Self.systemSettingsFrame() else { return }
