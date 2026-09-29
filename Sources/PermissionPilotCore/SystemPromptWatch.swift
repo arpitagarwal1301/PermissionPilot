@@ -5,60 +5,81 @@ import os.log
 /// Decides whether to open System Settings after an Accessibility / Screen
 /// Recording / Input Monitoring request — without fighting macOS' own prompt.
 ///
-/// The **first** request for each of these shows a system alert ("… would like
-/// to …" · Open System Settings / Deny), shown by another process. Opening the pane
-/// ourselves as well leaves that alert stranded on screen after the user grants
-/// access in the pane, and the user has to close it by hand (or click a
-/// confusing "Deny"). Later requests are silent, so there we *must* open the pane.
+/// A request can make macOS show its own alert ("… would like to …" · Open
+/// System Settings / Deny), drawn by another process. Opening the pane ourselves
+/// as well leaves that alert stranded on screen after the user grants access in
+/// the pane, and the user has to close it by hand (or click a confusing "Deny").
+/// When no alert appears we *must* open the pane, or Enable does nothing.
 ///
-/// So after the request we briefly watch for a new window from another process
-/// above the normal window layer. If one appears, that's the prompt: we leave the
-/// pane to its "Open System Settings" button, which also dismisses it. If none
-/// appears, we open the pane. Window IDs, layers, and owners come from
-/// `CGWindowListCopyWindowInfo` and need no permission (only titles are gated).
+/// So after the request we briefly watch for that alert: a window owned by a
+/// known prompt host (`universalAccessAuthWarn`, `UserNotificationCenter`) that
+/// wasn't on screen before the request. Matching the **owner** is what works:
+/// on macOS 27 the alert sits at the normal window layer (so "raised window"
+/// checks miss it), and requests can trigger a Spaces switch that brings dozens
+/// of unrelated windows, menu bars included, on screen at once (so "any new
+/// window" checks misfire). If the alert appears we leave the pane to its "Open
+/// System Settings" button, which also dismisses it; if not, we open the pane.
+/// Window IDs and owner names come from `CGWindowListCopyWindowInfo` and need
+/// no permission (only titles are gated).
+///
+/// When a prompt is *likely* (see ``PermissionProbe``) we wait longer before
+/// concluding there isn't one, since opening the pane under a slow prompt is
+/// the failure that strands it.
 @MainActor
 enum SystemPromptWatch {
 
     struct WindowSample: Equatable {
         let id: CGWindowID
         let layer: Int
-        let ownerPID: pid_t
+        let ownerName: String
     }
+
+    /// Processes that draw TCC's consent alerts (verified on macOS 27: Screen
+    /// Recording and Input Monitoring alerts come from `universalAccessAuthWarn`).
+    nonisolated static let promptHosts: Set<String> = ["universalAccessAuthWarn", "UserNotificationCenter"]
 
     private static let log = Logger(subsystem: "PermissionPilot", category: "systemPrompt")
 
-    /// How long to wait for the prompt before concluding there isn't one.
-    private static let detectWindow: TimeInterval = 1.0
     private static let pollInterval: TimeInterval = 0.2
     /// Stop tracking a prompt the user leaves open after this long.
     private static let maxPromptLifetime: TimeInterval = 300
+
+    /// How long to wait for the prompt before concluding there isn't one.
+    nonisolated static func detectWindow(promptLikely: Bool) -> TimeInterval {
+        promptLikely ? 3.0 : 1.0
+    }
 
     /// Takes the baseline snapshot. Call immediately **before** the request API.
     static func baseline() -> Set<CGWindowID> {
         Set(sample().map(\.id))
     }
 
-    /// Opens `permission`'s pane unless a system prompt shows up within ~1 s.
+    /// Opens `permission`'s pane unless a system prompt shows up first.
     /// - Parameters:
+    ///   - promptLikely: macOS is expected to prompt — wait longer for it.
     ///   - onPrompt: called once if a prompt is detected (pane left to it).
     ///   - onPromptGone: called once the detected prompt window is gone.
     static func openPaneUnlessPrompted(
         _ permission: Permission,
         baseline: Set<CGWindowID>,
+        promptLikely: Bool,
         onPrompt: @escaping () -> Void,
         onPromptGone: @escaping () -> Void
     ) {
         let start = Date()
+        let timeout = detectWindow(promptLikely: promptLikely)
         func poll() {
-            let prompt = promptWindows(baseline: baseline, current: sample(),
-                                       ownPID: ProcessInfo.processInfo.processIdentifier,
-                                       excludedPIDs: systemSettingsPIDs())
+            let current = sample()
+            let prompt = promptWindows(baseline: baseline, current: current)
+            let elapsed = Date().timeIntervalSince(start)
             if !prompt.isEmpty {
-                log.notice("\(permission.rawValue, privacy: .public): macOS prompt detected (windows \(prompt.sorted(), privacy: .public)) — leaving the pane to it")
+                log.notice("\(permission.rawValue, privacy: .public): macOS prompt detected after \(elapsed, format: .fixed(precision: 2), privacy: .public)s (windows \(prompt.sorted(), privacy: .public)) — leaving the pane to it")
                 onPrompt()
                 watchUntilGone(prompt, since: start, then: onPromptGone)
-            } else if Date().timeIntervalSince(start) >= detectWindow {
-                log.notice("\(permission.rawValue, privacy: .public): no macOS prompt — opening the pane")
+            } else if elapsed >= timeout {
+                let appeared = current.filter { !baseline.contains($0.id) }
+                    .map { "\($0.ownerName)#\($0.id)@L\($0.layer)" }
+                log.notice("\(permission.rawValue, privacy: .public): no macOS prompt within \(timeout, privacy: .public)s (likely: \(promptLikely, privacy: .public); new windows: \(appeared, privacy: .public)) — opening the pane")
                 SystemSettingsLink.open(permission)
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + pollInterval) { poll() }
@@ -67,18 +88,13 @@ enum SystemPromptWatch {
         DispatchQueue.main.asyncAfter(deadline: .now() + pollInterval) { poll() }
     }
 
-    /// Pure decision: windows that appeared since `baseline`, belong to another
-    /// process (not us, not System Settings), and sit above the normal layer —
-    /// i.e. a system alert.
+    /// Pure decision: prompt-host windows that came on screen since `baseline`.
     nonisolated static func promptWindows(
         baseline: Set<CGWindowID>,
-        current: [WindowSample],
-        ownPID: pid_t,
-        excludedPIDs: Set<pid_t>
+        current: [WindowSample]
     ) -> Set<CGWindowID> {
         Set(current
-            .filter { !baseline.contains($0.id) && $0.layer > 0
-                      && $0.ownerPID != ownPID && !excludedPIDs.contains($0.ownerPID) }
+            .filter { !baseline.contains($0.id) && promptHosts.contains($0.ownerName) }
             .map(\.id))
     }
 
@@ -100,15 +116,10 @@ enum SystemPromptWatch {
         else { return [] }
         return info.compactMap { window in
             guard let id = window[kCGWindowNumber as String] as? CGWindowID,
-                  let layer = window[kCGWindowLayer as String] as? Int,
-                  let pid = window[kCGWindowOwnerPID as String] as? pid_t
+                  let layer = window[kCGWindowLayer as String] as? Int
             else { return nil }
-            return WindowSample(id: id, layer: layer, ownerPID: pid)
+            return WindowSample(id: id, layer: layer,
+                                ownerName: window[kCGWindowOwnerName as String] as? String ?? "")
         }
-    }
-
-    private static func systemSettingsPIDs() -> Set<pid_t> {
-        Set(NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.systempreferences")
-            .map(\.processIdentifier))
     }
 }
